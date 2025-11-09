@@ -6,6 +6,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class User extends Authenticatable
 {
@@ -43,6 +45,54 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_super_admin' => 'boolean',
         ];
+    }
+
+    /**
+     * One-to-one relationship: if present, user is a staff assigned to a dorm.
+     */
+    public function staff(): HasOne
+    {
+        // Only treat as staff if there is an active (not revoked) staff record
+        return $this->hasOne(\App\Models\Staff::class)
+            ->whereNull('revoked_at')
+            ->where('is_active', true);
+    }
+
+    /**
+     * Convenience accessor to check if user is staff.
+     */
+    public function isStaff(): bool
+    {
+        return $this->staff()->exists();
+    }
+
+    /**
+     * Convenience accessor to check if user is super admin.
+     */
+    public function isSuperAdmin(): bool
+    {
+        return (bool) ($this->is_super_admin ?? false);
+    }
+
+    public function profile()
+    {
+        return $this->hasOne(\App\Models\UserProfile::class);
+    }
+
+    public function hobbies()
+    {
+        return $this->belongsToMany(\App\Models\Hobby::class, 'user_hobby')->withTimestamps();
+    }
+
+    protected static function booted(): void
+    {
+        static::created(function (User $user) {
+            // Ensure a profile row exists (blank defaults) so downstream logic never fails on missing profile
+            if (!$user->profile()->exists()) {
+                $user->profile()->create([]);
+            }
+        });
     }
 }

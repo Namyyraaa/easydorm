@@ -18,9 +18,19 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): Response
     {
+        $user = $request->user();
+    $profile = $user->profile ?: \App\Models\UserProfile::create(['user_id' => $user->id]);
+    $hobbies = \App\Models\Hobby::where('is_active', true)->orderBy('name')->get(['id','name']);
+    $faculties = \App\Models\Faculty::where('is_active', true)->orderBy('name')->get(['id','name','code']);
+        $userHobbyIds = $user->hobbies()->pluck('hobby_id');
+
         return Inertia::render('Profile/Edit', [
-            'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
+            'mustVerifyEmail' => $user instanceof MustVerifyEmail,
             'status' => session('status'),
+            'profile' => $profile->only(['gender','intake_session','faculty_id']),
+            'hobbies' => $hobbies,
+            'userHobbies' => $userHobbyIds,
+            'faculties' => $faculties,
         ]);
     }
 
@@ -38,6 +48,40 @@ class ProfileController extends Controller
         $request->user()->save();
 
         return Redirect::route('profile.edit');
+    }
+
+    public function updateDetails(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+        $data = $request->validate([
+            'gender' => ['nullable','in:male,female'],
+            'intake_session' => ['nullable','regex:/^\\d{2}\\/\\d{2}$/'],
+            'faculty_id' => ['nullable','integer','exists:faculties,id'],
+            'hobby_ids' => ['array'],
+            'hobby_ids.*' => ['integer','exists:hobbies,id'],
+        ]);
+
+        // Intake session logical check (second part == first+1) if provided
+        if (!empty($data['intake_session'])) {
+            [$start,$end] = explode('/', $data['intake_session']);
+            if (((int)$end) !== ((int)$start + 1)) {
+                return Redirect::back()->with('error', 'Invalid intake session range');
+            }
+        }
+
+        // Update / create profile
+    $profile = $user->profile ?: new \App\Models\UserProfile(['user_id' => $user->id]);
+    $profile->gender = $data['gender'] ?? $profile->gender;
+    $profile->intake_session = $data['intake_session'] ?? $profile->intake_session;
+    $profile->faculty_id = array_key_exists('faculty_id', $data) ? $data['faculty_id'] : $profile->faculty_id;
+    $profile->save();
+
+        // Sync hobbies
+        if (isset($data['hobby_ids'])) {
+            $user->hobbies()->sync($data['hobby_ids']);
+        }
+
+        return Redirect::route('profile.edit')->with('success', 'Profile details updated');
     }
 
     /**
