@@ -7,6 +7,8 @@ use Inertia\Inertia;
 use App\Http\Controllers\Admin\DormController;
 use App\Http\Controllers\Staff\ResidentsController;
 use App\Http\Controllers\Admin\DormManageController;
+use App\Http\Controllers\Student\MaintenanceRequestController as StudentMaintenanceController;
+use App\Http\Controllers\Staff\MaintenanceRequestController as StaffMaintenanceController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -26,6 +28,15 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::patch('/profile/details', [ProfileController::class, 'updateDetails'])->name('profile.details.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+// Student maintenance routes (auth + verified)
+Route::middleware(['auth','verified'])->prefix('student')->name('student.')->group(function() {
+    Route::get('/maintenance', [StudentMaintenanceController::class, 'index'])->name('maintenance.index');
+    Route::post('/maintenance', [StudentMaintenanceController::class, 'store'])->name('maintenance.store');
+    Route::get('/maintenance/{maintenanceRequest}', [StudentMaintenanceController::class, 'show'])->name('maintenance.show');
+    Route::patch('/maintenance/{maintenanceRequest}', [StudentMaintenanceController::class, 'update'])->name('maintenance.update');
+    Route::delete('/maintenance/{maintenanceRequest}', [StudentMaintenanceController::class, 'destroy'])->name('maintenance.destroy');
 });
 
 // Super Admin routes
@@ -50,4 +61,9 @@ Route::middleware(['auth', 'verified', 'staff'])->prefix('staff')->name('staff.'
     Route::post('/residents/assign', [ResidentsController::class, 'assign'])->name('residents.assign');
     Route::post('/residents/assign-bulk', [ResidentsController::class, 'assignBulk'])->name('residents.assignBulk');
     Route::post('/residents/revoke', [ResidentsController::class, 'revoke'])->name('residents.revoke');
+    // Maintenance
+    Route::get('/maintenance', [StaffMaintenanceController::class, 'index'])->name('maintenance.index');
+    Route::get('/maintenance/{maintenanceRequest}', [StaffMaintenanceController::class, 'show'])->name('maintenance.show');
+    Route::patch('/maintenance/{maintenanceRequest}/status', [StaffMaintenanceController::class, 'updateStatus'])->name('maintenance.updateStatus');
+    Route::patch('/maintenance/{maintenanceRequest}/status/revert', [StaffMaintenanceController::class, 'revertStatus'])->name('maintenance.revertStatus');
 });
