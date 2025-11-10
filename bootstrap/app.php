@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Route middleware aliases
         $middleware->alias([
             'staff' => \App\Http\Middleware\EnsureStaff::class,
+            'student' => \App\Http\Middleware\EnsureStudent::class,
             'superadmin' => \App\Http\Middleware\EnsureSuperAdmin::class,
         ]);
     })

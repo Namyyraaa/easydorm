@@ -13,7 +13,8 @@ class MaintenanceRequestController extends Controller
 {
     public function index(Request $request): Response
     {
-        $staffAssignment = ResidentAssignment::active()->where('student_id', $request->user()->id)->first();
+        // $staffAssignment = ResidentAssignment::active()->where('student_id', $request->user()->id)->first();
+        
         // Actually staff users have staff record; we need dorm via staff model, but fallback if logic differs
         $staff = \App\Models\Staff::active()->where('user_id', $request->user()->id)->first();
         if (!$staff) {

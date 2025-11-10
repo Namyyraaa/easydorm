@@ -9,6 +9,8 @@ use App\Http\Controllers\Staff\ResidentsController;
 use App\Http\Controllers\Admin\DormManageController;
 use App\Http\Controllers\Student\MaintenanceRequestController as StudentMaintenanceController;
 use App\Http\Controllers\Staff\MaintenanceRequestController as StaffMaintenanceController;
+use App\Http\Controllers\Student\ComplaintController as StudentComplaintController;
+use App\Http\Controllers\Staff\ComplaintController as StaffComplaintController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -30,13 +32,20 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// Student maintenance routes (auth + verified)
-Route::middleware(['auth','verified'])->prefix('student')->name('student.')->group(function() {
+// Student maintenance routes (auth + verified + student-only)
+Route::middleware(['auth','verified','student'])->prefix('student')->name('student.')->group(function() {
     Route::get('/maintenance', [StudentMaintenanceController::class, 'index'])->name('maintenance.index');
     Route::post('/maintenance', [StudentMaintenanceController::class, 'store'])->name('maintenance.store');
     Route::get('/maintenance/{maintenanceRequest}', [StudentMaintenanceController::class, 'show'])->name('maintenance.show');
     Route::patch('/maintenance/{maintenanceRequest}', [StudentMaintenanceController::class, 'update'])->name('maintenance.update');
     Route::delete('/maintenance/{maintenanceRequest}', [StudentMaintenanceController::class, 'destroy'])->name('maintenance.destroy');
+
+    // Complaints
+    Route::get('/complaints', [StudentComplaintController::class, 'index'])->name('complaints.index');
+    Route::post('/complaints', [StudentComplaintController::class, 'store'])->name('complaints.store');
+    Route::get('/complaints/{complaint}', [StudentComplaintController::class, 'show'])->name('complaints.show');
+    Route::patch('/complaints/{complaint}/drop', [StudentComplaintController::class, 'drop'])->name('complaints.drop');
+    Route::post('/complaints/{complaint}/comments', [StudentComplaintController::class, 'addComment'])->name('complaints.comments.store');
 });
 
 // Super Admin routes
@@ -66,4 +75,12 @@ Route::middleware(['auth', 'verified', 'staff'])->prefix('staff')->name('staff.'
     Route::get('/maintenance/{maintenanceRequest}', [StaffMaintenanceController::class, 'show'])->name('maintenance.show');
     Route::patch('/maintenance/{maintenanceRequest}/status', [StaffMaintenanceController::class, 'updateStatus'])->name('maintenance.updateStatus');
     Route::patch('/maintenance/{maintenanceRequest}/status/revert', [StaffMaintenanceController::class, 'revertStatus'])->name('maintenance.revertStatus');
+
+    // Complaints
+    Route::get('/complaints', [StaffComplaintController::class, 'index'])->name('complaints.index');
+    Route::get('/complaints/{complaint}', [StaffComplaintController::class, 'show'])->name('complaints.show');
+    Route::patch('/complaints/{complaint}/claim', [StaffComplaintController::class, 'claim'])->name('complaints.claim');
+    Route::patch('/complaints/{complaint}/status', [StaffComplaintController::class, 'updateStatus'])->name('complaints.updateStatus');
+    Route::patch('/complaints/{complaint}/status/revert', [StaffComplaintController::class, 'revertStatus'])->name('complaints.revertStatus');
+    Route::post('/complaints/{complaint}/comments', [StaffComplaintController::class, 'addComment'])->name('complaints.comments.store');
 });
