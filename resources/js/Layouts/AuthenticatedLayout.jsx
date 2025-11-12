@@ -6,7 +6,12 @@ import { Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
 export default function AuthenticatedLayout({ header, children }) {
-    const user = usePage().props.auth.user;
+    const { auth } = usePage().props;
+    const user = auth.user;
+    // Role flags from shared props
+    const isSuperAdmin = !!auth.isSuperAdmin;
+    const isStaff = !!auth.isStaff;
+    const isStudent = !!auth.isStudent;
 
     const [showingNavigationDropdown, setShowingNavigationDropdown] =
         useState(false);
@@ -23,13 +28,52 @@ export default function AuthenticatedLayout({ header, children }) {
                                 </Link>
                             </div>
 
-                            <div className="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                                <NavLink
-                                    href={route('dashboard')}
-                                    active={route().current('dashboard')}
-                                >
-                                    Dashboard
-                                </NavLink>
+                            <div className="hidden space-x-6 sm:-my-px sm:ms-10 sm:flex">
+                                <NavLink href={route('dashboard')} active={route().current('dashboard')}>Dashboard</NavLink>
+                                {isSuperAdmin && (
+                                    <>
+                                        <NavLink href={route('admin.dorms.index')} active={route().current('admin.dorms.index')}>Dorms</NavLink>
+                                        <NavLink href={route('admin.inventory.categories.index')} active={route().current('admin.inventory.categories.index')}>Inventory Categories</NavLink>
+                                    </>
+                                )}
+                                {isStaff && (
+                                    <>
+                                        <NavLink href={route('staff.residents.index')} active={route().current('staff.residents.index')}>Residents</NavLink>
+                                        <NavLink href={route('staff.maintenance.index')} active={route().current('staff.maintenance.index')}>Maintenance</NavLink>
+                                        <NavLink href={route('staff.complaints.index')} active={route().current('staff.complaints.index')}>Complaints</NavLink>
+
+                                        {(() => {
+                                            const inventoryActive = route().current('staff.inventory.items.index') || route().current('staff.inventory.stock.index') || route().current('staff.inventory.transactions.index');
+                                            const base = 'inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium leading-5 transition duration-150 ease-in-out focus:outline-none';
+                                            const active = inventoryActive ? ' border-indigo-400 text-gray-900 focus:border-indigo-700' : ' border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 focus:border-gray-300 focus:text-gray-700';
+                                            return (
+                                                <div className={base + active}>
+                                                    <Dropdown>
+                                                        <Dropdown.Trigger>
+                                                            <button type="button" className="inline-flex items-center text-sm font-medium leading-5 text-inherit focus:outline-none h-16 cursor-pointer">
+                                                                Inventory
+                                                                <svg className="-me-0.5 ms-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                                                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                                                                </svg>
+                                                            </button>
+                                                        </Dropdown.Trigger>
+                                                        <Dropdown.Content>
+                                                            <Dropdown.Link href={route('staff.inventory.items.index')}>Items</Dropdown.Link>
+                                                            <Dropdown.Link href={route('staff.inventory.stock.index')}>Room Allocations</Dropdown.Link>
+                                                            <Dropdown.Link href={route('staff.inventory.transactions.index')}>Transactions</Dropdown.Link>
+                                                        </Dropdown.Content>
+                                                    </Dropdown>
+                                                </div>
+                                            );
+                                        })()}
+                                    </>
+                                )}
+                                {isStudent && (
+                                    <>
+                                        <NavLink href={route('student.maintenance.index')} active={route().current('student.maintenance.index')}>My Maintenance</NavLink>
+                                        <NavLink href={route('student.complaints.index')} active={route().current('student.complaints.index')}>My Complaints</NavLink>
+                                    </>
+                                )}
                             </div>
                         </div>
 
@@ -128,12 +172,30 @@ export default function AuthenticatedLayout({ header, children }) {
                     }
                 >
                     <div className="space-y-1 pb-3 pt-2">
-                        <ResponsiveNavLink
-                            href={route('dashboard')}
-                            active={route().current('dashboard')}
-                        >
-                            Dashboard
-                        </ResponsiveNavLink>
+                        <ResponsiveNavLink href={route('dashboard')} active={route().current('dashboard')}>Dashboard</ResponsiveNavLink>
+                        {isSuperAdmin && (
+                            <>
+                                <ResponsiveNavLink href={route('admin.dorms.index')} active={route().current('admin.dorms.index')}>Dorms</ResponsiveNavLink>
+                                <ResponsiveNavLink href={route('admin.inventory.categories.index')} active={route().current('admin.inventory.categories.index')}>Inventory Categories</ResponsiveNavLink>
+                            </>
+                        )}
+                        {isStaff && (
+                            <>
+                                <ResponsiveNavLink href={route('staff.residents.index')} active={route().current('staff.residents.index')}>Residents</ResponsiveNavLink>
+                                <ResponsiveNavLink href={route('staff.maintenance.index')} active={route().current('staff.maintenance.index')}>Maintenance</ResponsiveNavLink>
+                                <ResponsiveNavLink href={route('staff.complaints.index')} active={route().current('staff.complaints.index')}>Complaints</ResponsiveNavLink>
+                                <div className="px-4 pt-2 font-semibold text-xs text-gray-500 uppercase">Inventory</div>
+                                <ResponsiveNavLink href={route('staff.inventory.items.index')} active={route().current('staff.inventory.items.index')}>Items</ResponsiveNavLink>
+                                <ResponsiveNavLink href={route('staff.inventory.stock.index')} active={route().current('staff.inventory.stock.index')}>Room Allocations</ResponsiveNavLink>
+                                <ResponsiveNavLink href={route('staff.inventory.transactions.index')} active={route().current('staff.inventory.transactions.index')}>Transactions</ResponsiveNavLink>
+                            </>
+                        )}
+                        {isStudent && (
+                            <>
+                                <ResponsiveNavLink href={route('student.maintenance.index')} active={route().current('student.maintenance.index')}>My Maintenance</ResponsiveNavLink>
+                                <ResponsiveNavLink href={route('student.complaints.index')} active={route().current('student.complaints.index')}>My Complaints</ResponsiveNavLink>
+                            </>
+                        )}
                     </div>
 
                     <div className="border-t border-gray-200 pb-1 pt-4">

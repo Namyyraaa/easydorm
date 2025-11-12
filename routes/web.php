@@ -11,6 +11,10 @@ use App\Http\Controllers\Student\MaintenanceRequestController as StudentMaintena
 use App\Http\Controllers\Staff\MaintenanceRequestController as StaffMaintenanceController;
 use App\Http\Controllers\Student\ComplaintController as StudentComplaintController;
 use App\Http\Controllers\Staff\ComplaintController as StaffComplaintController;
+use App\Http\Controllers\Admin\InventoryCategoryController;
+use App\Http\Controllers\Staff\InventoryItemController;
+use App\Http\Controllers\Staff\InventoryStockController;
+use App\Http\Controllers\Staff\InventoryTransactionController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -60,6 +64,12 @@ Route::middleware(['auth', 'verified', 'superadmin'])->prefix('admin')->name('ad
     Route::get('/dorms/{dorm}', [DormManageController::class, 'show'])->name('dorms.manage');
     Route::post('/dorms/{dorm}/blocks', [DormManageController::class, 'storeBlock'])->name('dorms.blocks.store');
     Route::post('/dorms/{dorm}/rooms', [DormManageController::class, 'storeRoom'])->name('dorms.rooms.store');
+
+    // Inventory Categories (catalog management)
+    Route::get('/inventory/categories', [InventoryCategoryController::class, 'index'])->name('inventory.categories.index');
+    Route::post('/inventory/categories', [InventoryCategoryController::class, 'store'])->name('inventory.categories.store');
+    Route::patch('/inventory/categories/{inventoryCategory}', [InventoryCategoryController::class, 'update'])->name('inventory.categories.update');
+    Route::patch('/inventory/categories/{inventoryCategory}/toggle', [InventoryCategoryController::class, 'toggle'])->name('inventory.categories.toggle');
 });
 
 require __DIR__.'/auth.php';
@@ -83,4 +93,22 @@ Route::middleware(['auth', 'verified', 'staff'])->prefix('staff')->name('staff.'
     Route::patch('/complaints/{complaint}/status', [StaffComplaintController::class, 'updateStatus'])->name('complaints.updateStatus');
     Route::patch('/complaints/{complaint}/status/revert', [StaffComplaintController::class, 'revertStatus'])->name('complaints.revertStatus');
     Route::post('/complaints/{complaint}/comments', [StaffComplaintController::class, 'addComment'])->name('complaints.comments.store');
+
+    // Inventory Items
+    Route::get('/inventory/items', [InventoryItemController::class, 'index'])->name('inventory.items.index');
+    Route::post('/inventory/items', [InventoryItemController::class, 'store'])->name('inventory.items.store');
+    Route::patch('/inventory/items/{inventoryItem}', [InventoryItemController::class, 'update'])->name('inventory.items.update');
+    Route::delete('/inventory/items/{inventoryItem}', [InventoryItemController::class, 'destroy'])->name('inventory.items.destroy');
+
+    // Inventory Stock overview
+    Route::get('/inventory/stock', [InventoryStockController::class, 'index'])->name('inventory.stock.index');
+
+    // Inventory Transactions
+    Route::get('/inventory/transactions', [InventoryTransactionController::class, 'index'])->name('inventory.transactions.index');
+    Route::post('/inventory/transactions/receive', [InventoryTransactionController::class, 'receive'])->name('inventory.transactions.receive');
+    Route::post('/inventory/transactions/assign', [InventoryTransactionController::class, 'assign'])->name('inventory.transactions.assign');
+    Route::post('/inventory/transactions/transfer', [InventoryTransactionController::class, 'transfer'])->name('inventory.transactions.transfer');
+    Route::post('/inventory/transactions/demolish-central', [InventoryTransactionController::class, 'demolishCentral'])->name('inventory.transactions.demolishCentral');
+    Route::post('/inventory/transactions/demolish-room', [InventoryTransactionController::class, 'demolishRoom'])->name('inventory.transactions.demolishRoom');
+    Route::post('/inventory/transactions/unassign', [InventoryTransactionController::class, 'unassign'])->name('inventory.transactions.unassign');
 });

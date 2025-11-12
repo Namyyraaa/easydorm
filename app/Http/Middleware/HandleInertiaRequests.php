@@ -29,10 +29,18 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        $user = $request->user();
+        $isSuperAdmin = $user ? (bool) ($user->is_super_admin ?? false) : false;
+        $isStaff = $user ? $user->isStaff() : false;
+        $isStudent = $user ? (!$isSuperAdmin && !$isStaff) : false;
+
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $request->user(),
+                'user' => $user,
+                'isSuperAdmin' => $isSuperAdmin,
+                'isStaff' => $isStaff,
+                'isStudent' => $isStudent,
             ],
             'flash' => [
                 'success' => $request->session()->get('success'),
