@@ -111,4 +111,10 @@ Route::middleware(['auth', 'verified', 'staff'])->prefix('staff')->name('staff.'
     Route::post('/inventory/transactions/demolish-central', [InventoryTransactionController::class, 'demolishCentral'])->name('inventory.transactions.demolishCentral');
     Route::post('/inventory/transactions/demolish-room', [InventoryTransactionController::class, 'demolishRoom'])->name('inventory.transactions.demolishRoom');
     Route::post('/inventory/transactions/unassign', [InventoryTransactionController::class, 'unassign'])->name('inventory.transactions.unassign');
+
+    // Visitors
+    Route::get('/visitors', [\App\Http\Controllers\Staff\VisitorController::class, 'index'])->name('visitors.index');
+    Route::post('/visitors', [\App\Http\Controllers\Staff\VisitorController::class, 'store'])->name('visitors.store');
+    Route::patch('/visitors/{visitorLog}', [\App\Http\Controllers\Staff\VisitorController::class, 'update'])->name('visitors.update');
+    Route::patch('/visitors/{visitorLog}/checkout', [\App\Http\Controllers\Staff\VisitorController::class, 'checkout'])->name('visitors.checkout');
 });

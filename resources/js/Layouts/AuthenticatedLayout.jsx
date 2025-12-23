@@ -41,6 +41,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                         <NavLink href={route('staff.residents.index')} active={route().current('staff.residents.index')}>Residents</NavLink>
                                         <NavLink href={route('staff.maintenance.index')} active={route().current('staff.maintenance.index')}>Maintenance</NavLink>
                                         <NavLink href={route('staff.complaints.index')} active={route().current('staff.complaints.index')}>Complaints</NavLink>
+                                        <NavLink href={route('staff.visitors.index')} active={route().current('staff.visitors.index')}>Visitors</NavLink>
 
                                         {(() => {
                                             const inventoryActive = route().current('staff.inventory.items.index') || route().current('staff.inventory.stock.index') || route().current('staff.inventory.transactions.index');
@@ -184,6 +185,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                 <ResponsiveNavLink href={route('staff.residents.index')} active={route().current('staff.residents.index')}>Residents</ResponsiveNavLink>
                                 <ResponsiveNavLink href={route('staff.maintenance.index')} active={route().current('staff.maintenance.index')}>Maintenance</ResponsiveNavLink>
                                 <ResponsiveNavLink href={route('staff.complaints.index')} active={route().current('staff.complaints.index')}>Complaints</ResponsiveNavLink>
+                                <ResponsiveNavLink href={route('staff.visitors.index')} active={route().current('staff.visitors.index')}>Visitors</ResponsiveNavLink>
                                 <div className="px-4 pt-2 font-semibold text-xs text-gray-500 uppercase">Inventory</div>
                                 <ResponsiveNavLink href={route('staff.inventory.items.index')} active={route().current('staff.inventory.items.index')}>Items</ResponsiveNavLink>
                                 <ResponsiveNavLink href={route('staff.inventory.stock.index')} active={route().current('staff.inventory.stock.index')}>Room Allocations</ResponsiveNavLink>
