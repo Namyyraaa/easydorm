@@ -65,7 +65,7 @@ class VisitorController extends Controller
             'visitor_name' => ['required','string','max:150'],
             'company' => ['nullable','string','max:150'],
             'phone' => ['nullable','string','max:30'],
-            'arrival_time' => ['nullable','date'],
+            'arrival_time' => ['required','date'],
             'block_id' => ['required','integer','exists:dorm_blocks,id'],
             'room_id' => ['nullable','integer','exists:rooms,id'],
             'entry_reason' => ['nullable','string','max:500'],
@@ -91,9 +91,10 @@ class VisitorController extends Controller
             'visitor_name' => $data['visitor_name'],
             'company' => $data['company'] ?? null,
             'phone' => $data['phone'] ?? null,
-            'arrival_time' => $data['arrival_time'] ?? now(),
+            'arrival_time' => $data['arrival_time'],
             'entry_reason' => $data['entry_reason'] ?? null,
             'recorded_by_staff_id' => $staff->id,
+            'updated_by_staff_id' => $staff->id,
         ]);
 
         return back()->with('success', 'Visitor entry recorded');
@@ -114,6 +115,7 @@ class VisitorController extends Controller
             'block_id' => ['required','integer','exists:dorm_blocks,id'],
             'room_id' => ['nullable','integer','exists:rooms,id'],
             'arrival_time' => ['nullable','date'],
+            'out_time' => ['nullable','date'],
         ]);
 
         // Validate dorm scoping
@@ -137,6 +139,8 @@ class VisitorController extends Controller
             'block_id' => $block->id,
             'room_id' => $roomId,
             'arrival_time' => $data['arrival_time'] ?? $visitorLog->arrival_time,
+            'out_time' => $data['out_time'] ?? $visitorLog->out_time,
+            'updated_by_staff_id' => $staff->id,
         ]);
 
         return back()->with('success', 'Visitor entry updated');
@@ -155,8 +159,28 @@ class VisitorController extends Controller
 
         $visitorLog->update([
             'out_time' => $data['out_time'] ?? now(),
+            'updated_by_staff_id' => $staff->id,
         ]);
 
         return back()->with('success', 'Visitor checked out');
+    }
+
+    public function destroy(Request $request, VisitorLog $visitorLog)
+    {
+        $staff = Staff::active()->where('user_id', $request->user()->id)->first();
+        if (!$staff || $staff->dorm_id !== $visitorLog->dorm_id) {
+            abort(403, 'Not authorized');
+        }
+
+        // If active (no out_time), hard delete; if checked out, soft delete and record who deleted
+        if ($visitorLog->out_time === null) {
+            $visitorLog->forceDelete();
+        } else {
+            $visitorLog->deleted_by_staff_id = $staff->id;
+            $visitorLog->save();
+            $visitorLog->delete();
+        }
+
+        return back()->with('success', 'Visitor log deleted');
     }
 }

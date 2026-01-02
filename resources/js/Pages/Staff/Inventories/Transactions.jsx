@@ -56,7 +56,7 @@ export default function Transactions() {
                 {flash?.success && <div className="p-3 bg-green-100 text-green-700 rounded">{flash.success}</div>}
                 {flash?.error && <div className="p-3 bg-red-100 text-red-700 rounded">{flash.error}</div>}
 
-                <div className="grid md:grid-cols-2 gap-6">
+                <div className="grid md:grid-cols-2 gap-6 p-6">
                     <form onSubmit={submitReceive} className="bg-white p-4 rounded shadow space-y-3">
                         <h3 className="font-medium">Receive</h3>
                         <select className="w-full border rounded px-2 py-2" value={receiveForm.data.item_id} onChange={e => receiveForm.setData('item_id', e.target.value)} required>
@@ -87,7 +87,7 @@ export default function Transactions() {
                         <button disabled={assignForm.processing} className="bg-indigo-600 text-white px-4 py-2 rounded">Assign</button>
                     </form>
 
-                    <form onSubmit={submitTransfer} className="bg-white p-4 rounded shadow space-y-3">
+                    <form onSubmit={submitTransfer} className="bg-white p-6 rounded shadow space-y-3">
                         <h3 className="font-medium">Transfer Room → Room</h3>
                         <select className="w-full border rounded px-2 py-2" value={transferForm.data.item_id} onChange={e => transferForm.setData('item_id', e.target.value)} required>
                             <option value="">Item...</option>{itemOptions}

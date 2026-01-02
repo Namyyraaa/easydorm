@@ -33,6 +33,7 @@ class HandleInertiaRequests extends Middleware
         $isSuperAdmin = $user ? (bool) ($user->is_super_admin ?? false) : false;
         $isStaff = $user ? $user->isStaff() : false;
         $isStudent = $user ? (!$isSuperAdmin && !$isStaff) : false;
+        $isJakmas = $user ? $user->isJakmas() : false;
 
         return [
             ...parent::share($request),
@@ -41,6 +42,7 @@ class HandleInertiaRequests extends Middleware
                 'isSuperAdmin' => $isSuperAdmin,
                 'isStaff' => $isStaff,
                 'isStudent' => $isStudent,
+                'isJakmas' => $isJakmas,
             ],
             'flash' => [
                 'success' => $request->session()->get('success'),

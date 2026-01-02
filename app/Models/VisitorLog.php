@@ -22,6 +22,8 @@ class VisitorLog extends Model
         'out_time',
         'entry_reason',
         'recorded_by_staff_id',
+        'updated_by_staff_id',
+        'deleted_by_staff_id',
     ];
 
     protected function casts(): array
@@ -50,5 +52,15 @@ class VisitorLog extends Model
     public function recorder(): BelongsTo
     {
         return $this->belongsTo(Staff::class, 'recorded_by_staff_id');
+    }
+
+    public function editor(): BelongsTo
+    {
+        return $this->belongsTo(Staff::class, 'updated_by_staff_id');
+    }
+
+    public function deleter(): BelongsTo
+    {
+        return $this->belongsTo(Staff::class, 'deleted_by_staff_id');
     }
 }

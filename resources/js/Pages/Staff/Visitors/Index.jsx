@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Head, useForm, usePage, router } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import EditVisitorModal from '@/Components/Visitors/EditVisitorModal';
 
 export default function VisitorsIndex() {
   const { props } = usePage();
@@ -12,6 +13,7 @@ export default function VisitorsIndex() {
 
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [checkoutAt, setCheckoutAt] = useState({});
+  const [editModal, setEditModal] = useState({ open: false, visitor: null });
 
   function localToISO(dtLocal) {
     if (!dtLocal) return '';
@@ -73,12 +75,34 @@ export default function VisitorsIndex() {
       const iso = localToISO(payload.arrival_time);
       if (iso) payload.arrival_time = iso;
     }
+    if (payload?.out_time) {
+      const isoO = localToISO(payload.out_time);
+      if (isoO) payload.out_time = isoO;
+    }
     router.patch(route('staff.visitors.update', id), payload, { preserveScroll: true });
+  }
+
+  function handleEdit(visitor) {
+    setEditModal({ open: true, visitor });
+  }
+  function handleEditSave(form) {
+    const id = editModal.visitor?.id;
+    setEditModal({ open: false, visitor: null });
+    if (id) updateRow(id, form);
+  }
+  function handleEditClose() {
+    setEditModal({ open: false, visitor: null });
+  }
+  function handleDelete(id) {
+    if (window.confirm('Delete this visitor log?')) {
+      router.delete(route('staff.visitors.destroy', id), { preserveScroll: true });
+    }
   }
 
   return (
     <AuthenticatedLayout header={<h2 className="text-xl font-semibold leading-tight text-gray-800">Visitors</h2>}>
       <Head title="Visitors" />
+      <EditVisitorModal open={editModal.open} onClose={handleEditClose} onSave={handleEditSave} visitor={editModal.visitor || {}} blocks={blocks} rooms={rooms} />
       <div className="py-12 space-y-8">
         {(flash.success || flash.error) && (
           <div className={`mx-auto max-w-7xl sm:px-6 lg:px-8 ${flash.error ? 'text-red-800 bg-red-100' : 'text-green-800 bg-green-100'} border ${flash.error ? 'border-red-200' : 'border-green-200'} rounded p-3`}>
@@ -131,8 +155,8 @@ export default function VisitorsIndex() {
                 {form.errors.entry_reason && <p className="text-sm text-red-600">{form.errors.entry_reason}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium">Arrival Time (optional)</label>
-                <input type="datetime-local" className="mt-1 w-full border rounded p-2" value={form.data.arrival_time} onChange={e => form.setData('arrival_time', e.target.value)} />
+                <label className="block text-sm font-medium">Arrival Time</label>
+                <input required type="datetime-local" className="mt-1 w-full border rounded p-2" value={form.data.arrival_time} onChange={e => form.setData('arrival_time', e.target.value)} />
                 {form.errors.arrival_time && <p className="text-sm text-red-600">{form.errors.arrival_time}</p>}
               </div>
               <button type="submit" disabled={form.processing} className="px-4 py-2 bg-indigo-600 text-white rounded">Record Entry</button>
@@ -181,8 +205,10 @@ export default function VisitorsIndex() {
                         onChange={e => setCheckoutAt(prev => ({ ...prev, [v.id]: e.target.value }))}
                       />
                     </td>
-                    <td className="text-right">
+                    <td className="text-right flex gap-2">
                       <button type="button" className="px-3 py-1 bg-green-600 text-white rounded" onClick={() => checkout(v.id)}>Checkout</button>
+                      <button type="button" className="px-3 py-1 bg-yellow-500 text-white rounded" onClick={() => handleEdit(v)}>Edit</button>
+                      <button type="button" className="px-3 py-1 bg-red-600 text-white rounded" onClick={() => handleDelete(v.id)}>Delete</button>
                     </td>
                   </tr>
                 ))}
@@ -207,6 +233,7 @@ export default function VisitorsIndex() {
                   <th className="text-left">Room</th>
                   <th className="text-left">Arrival</th>
                   <th className="text-left">Out</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
@@ -219,10 +246,14 @@ export default function VisitorsIndex() {
                     <td>{rooms.find(r => r.id === v.room_id)?.room_number || '-'}</td>
                     <td>{new Date(v.arrival_time).toLocaleString()}</td>
                     <td>{new Date(v.out_time).toLocaleString()}</td>
+                    <td className="text-right flex gap-2">
+                      <button type="button" className="px-3 py-1 bg-yellow-500 text-white rounded" onClick={() => handleEdit(v)}>Edit</button>
+                      <button type="button" className="px-3 py-1 bg-red-600 text-white rounded" onClick={() => handleDelete(v.id)}>Delete</button>
+                    </td>
                   </tr>
                 ))}
                 {recentVisitors.length === 0 && (
-                  <tr><td colSpan="7" className="py-2 text-gray-500">No recent activity</td></tr>
+                  <tr><td colSpan="8" className="py-2 text-gray-500">No recent activity</td></tr>
                 )}
               </tbody>
             </table>

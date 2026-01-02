@@ -69,6 +69,24 @@ class User extends Authenticatable
     }
 
     /**
+     * One-to-one relationship: if present, user is a JAKMAS assigned to a dorm.
+     */
+    public function jakmas(): HasOne
+    {
+        return $this->hasOne(\App\Models\Jakmas::class)
+            ->whereNull('revoked_at')
+            ->where('is_active', true);
+    }
+
+    /**
+     * Convenience accessor to check if user is JAKMAS.
+     */
+    public function isJakmas(): bool
+    {
+        return $this->jakmas()->exists();
+    }
+
+    /**
      * Convenience accessor to check if user is super admin.
      */
     public function isSuperAdmin(): bool

@@ -117,4 +117,43 @@ Route::middleware(['auth', 'verified', 'staff'])->prefix('staff')->name('staff.'
     Route::post('/visitors', [\App\Http\Controllers\Staff\VisitorController::class, 'store'])->name('visitors.store');
     Route::patch('/visitors/{visitorLog}', [\App\Http\Controllers\Staff\VisitorController::class, 'update'])->name('visitors.update');
     Route::patch('/visitors/{visitorLog}/checkout', [\App\Http\Controllers\Staff\VisitorController::class, 'checkout'])->name('visitors.checkout');
+    Route::delete('/visitors/{visitorLog}', [\App\Http\Controllers\Staff\VisitorController::class, 'destroy'])->name('visitors.destroy');
+
+    // Events management (Staff)
+    Route::get('/events', [\App\Http\Controllers\Staff\EventController::class, 'index'])->name('events.index');
+    Route::get('/events/create', [\App\Http\Controllers\Staff\EventController::class, 'create'])->name('events.create');
+    Route::post('/events', [\App\Http\Controllers\Staff\EventController::class, 'store'])->name('events.store');
+    Route::get('/events/{event}', [\App\Http\Controllers\Staff\EventController::class, 'show'])->name('events.show');
+    Route::patch('/events/{event}', [\App\Http\Controllers\Staff\EventController::class, 'update'])->name('events.update');
+    Route::delete('/events/{event}', [\App\Http\Controllers\Staff\EventController::class, 'destroy'])->name('events.destroy');
+    Route::post('/events/{event}/set-password', [\App\Http\Controllers\Staff\EventController::class, 'setPassword'])->name('events.setPassword');
+    Route::post('/events/{event}/media', [\App\Http\Controllers\Staff\EventController::class, 'uploadMedia'])->name('events.media.upload');
+    Route::delete('/events/{event}/media/{media}', [\App\Http\Controllers\Staff\EventController::class, 'removeMedia'])->name('events.media.remove');
+
+    // JAKMAS assignment by staff
+    Route::get('/jakmas', [\App\Http\Controllers\Staff\JakmasController::class, 'index'])->name('jakmas.index');
+    Route::get('/jakmas/candidates', [\App\Http\Controllers\Staff\JakmasController::class, 'candidates'])->name('jakmas.candidates');
+    Route::post('/jakmas/assign', [\App\Http\Controllers\Staff\JakmasController::class, 'assign'])->name('jakmas.assign');
+    Route::patch('/jakmas/{jakmas}/revoke', [\App\Http\Controllers\Staff\JakmasController::class, 'revoke'])->name('jakmas.revoke');
+});
+
+// JAKMAS routes (auth + verified + jakmas)
+Route::middleware(['auth', 'verified', 'jakmas'])->prefix('jakmas')->name('jakmas.')->group(function () {
+    Route::get('/events', [\App\Http\Controllers\Jakmas\EventController::class, 'index'])->name('events.index');
+    Route::get('/events/create', [\App\Http\Controllers\Jakmas\EventController::class, 'create'])->name('events.create');
+    Route::post('/events', [\App\Http\Controllers\Jakmas\EventController::class, 'store'])->name('events.store');
+    Route::get('/events/{event}', [\App\Http\Controllers\Jakmas\EventController::class, 'show'])->name('events.show');
+    Route::patch('/events/{event}', [\App\Http\Controllers\Jakmas\EventController::class, 'update'])->name('events.update');
+    Route::delete('/events/{event}', [\App\Http\Controllers\Jakmas\EventController::class, 'destroy'])->name('events.destroy');
+    Route::post('/events/{event}/set-password', [\App\Http\Controllers\Jakmas\EventController::class, 'setPassword'])->name('events.setPassword');
+    Route::post('/events/{event}/media', [\App\Http\Controllers\Jakmas\EventController::class, 'uploadMedia'])->name('events.media.upload');
+    Route::delete('/events/{event}/media/{media}', [\App\Http\Controllers\Jakmas\EventController::class, 'removeMedia'])->name('events.media.remove');
+});
+
+// Student event viewing + registration
+Route::middleware(['auth','verified','student'])->prefix('student')->name('student.')->group(function() {
+    Route::get('/events', [\App\Http\Controllers\Student\EventController::class, 'index'])->name('events.index');
+    Route::get('/events/{event}', [\App\Http\Controllers\Student\EventController::class, 'show'])->name('events.show');
+    Route::post('/events/{event}/register', [\App\Http\Controllers\Student\EventController::class, 'register'])->name('events.register');
+    Route::post('/events/{event}/attend', [\App\Http\Controllers\Student\EventController::class, 'attend'])->name('events.attend');
 });
