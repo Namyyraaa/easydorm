@@ -10,10 +10,16 @@ export default function StaffFinesShow() {
   const flash = props.flash || {};
 
   const form = useForm({ amount_rm: fine.amount_rm || '', due_date: (fine.due_date ? fine.due_date.slice(0,10) : ''), status: fine.status || '' });
+  const approveForm = useForm({});
 
   const submit = (e) => {
     e.preventDefault();
     form.patch(route('staff.fines.update', fine.id));
+  };
+
+  const approvePayment = (e) => {
+    e.preventDefault();
+    approveForm.patch(route('staff.fines.approvePayment', fine.id));
   };
 
   return (
@@ -75,6 +81,26 @@ export default function StaffFinesShow() {
                 </a>
               ))}
               {(fine.media || []).length === 0 && <p className="text-sm text-gray-600">No attachments.</p>}
+            </div>
+            <div className="mt-4">
+              <h4 className="font-medium">Payment Proofs</h4>
+              <div className="grid grid-cols-4 gap-3 mt-2">
+                {(fine.media || []).filter((m) => m.type === 'payment').map((m) => (
+                  <a key={m.id} href={m.url} target="_blank" rel="noreferrer" className="block border rounded overflow-hidden">
+                    {m.mime_type?.startsWith('image/') ? (
+                      <img src={m.url} alt={m.original_filename || 'payment'} className="w-full h-32 object-cover" />
+                    ) : (
+                      <div className="p-3 text-sm">{m.original_filename || 'Attachment'}</div>
+                    )}
+                  </a>
+                ))}
+                {(fine.media || []).filter((m) => m.type === 'payment').length === 0 && <p className="text-sm text-gray-600">No payment proofs submitted.</p>}
+              </div>
+              {fine.status === 'pending' && (fine.media || []).filter((m) => m.type === 'payment').length > 0 && (
+                <form onSubmit={approvePayment} className="mt-3">
+                  <button type="submit" disabled={approveForm.processing} className="px-4 py-2 bg-green-600 text-white rounded">Approve Payment (Mark as PAID)</button>
+                </form>
+              )}
             </div>
           </div>
         </div>

@@ -7,6 +7,8 @@ export default function StudentFinesShow() {
   const fine = props.fine || {};
   const form = useForm({ reason: '', attachments: [] });
   const [previews, setPreviews] = React.useState([]);
+  const payForm = useForm({ proof: null });
+  const [payPreview, setPayPreview] = React.useState(null);
 
   const onAttachmentsChange = (files) => {
     const arr = Array.from(files || []);
@@ -19,6 +21,18 @@ export default function StudentFinesShow() {
   const submitAppeal = (e) => {
     e.preventDefault();
     form.post(route('student.fines.appeal', fine.id), { forceFormData: true, onSuccess: () => { form.reset('reason','attachments'); setPreviews([]); } });
+  };
+
+  const onProofChange = (file) => {
+    const f = file?.[0] || null;
+    payForm.setData('proof', f);
+    setPayPreview(f && f.type.startsWith('image/') ? URL.createObjectURL(f) : null);
+  };
+
+  const submitPaymentProof = (e) => {
+    e.preventDefault();
+    if (!payForm.data.proof) { alert('Please select a file'); return; }
+    payForm.post(route('student.fines.paymentProof', fine.id), { forceFormData: true, onSuccess: () => { payForm.reset('proof'); setPayPreview(null); } });
   };
 
   return (
@@ -49,6 +63,39 @@ export default function StudentFinesShow() {
                 </a>
               ))}
               {(fine.media || []).length === 0 && <p className="text-sm text-gray-600">No attachments.</p>}
+            </div>
+          </div>
+
+          <div className="bg-white shadow sm:rounded-lg p-6">
+            <h3 className="font-semibold mb-3">Payment Proof</h3>
+            <form onSubmit={submitPaymentProof} className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium">Upload proof (image or PDF)</label>
+                <input type="file" accept="image/*,application/pdf" className="mt-1 w-full" onChange={(e) => onProofChange(e.target.files)} />
+                {payForm.errors.proof && <p className="text-sm text-red-600">{payForm.errors.proof}</p>}
+                {payPreview && (
+                  <div className="mt-3">
+                    <img src={payPreview} alt="preview" className="w-40 h-40 object-cover rounded border" />
+                  </div>
+                )}
+              </div>
+              <button type="submit" disabled={payForm.processing} className="px-4 py-2 bg-green-600 text-white rounded">Submit Payment Proof</button>
+            </form>
+
+            <div className="mt-4">
+              <h4 className="font-medium">Submitted Proofs</h4>
+              <div className="grid grid-cols-4 gap-3 mt-2">
+                {(fine.media || []).filter((m) => m.type === 'payment').map((m) => (
+                  <a key={m.id} href={m.url ?? ('/storage/'+m.path)} target="_blank" rel="noreferrer" className="block border rounded overflow-hidden">
+                    {m.mime_type?.startsWith('image/') ? (
+                      <img src={m.url ?? ('/storage/'+m.path)} alt={m.original_filename || 'payment'} className="w-full h-32 object-cover" />
+                    ) : (
+                      <div className="p-3 text-sm">{m.original_filename || 'Attachment'}</div>
+                    )}
+                  </a>
+                ))}
+                {(fine.media || []).filter((m) => m.type === 'payment').length === 0 && <p className="text-sm text-gray-600">No payment proofs yet.</p>}
+              </div>
             </div>
           </div>
 

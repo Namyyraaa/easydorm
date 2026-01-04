@@ -5,6 +5,7 @@ import React from 'react';
 export default function StudentFinesIndex() {
   const { props } = usePage();
   const items = props.items || [];
+  const ledger = props.ledger || { totalOutstanding: 0, totalIssued: 0, totalPaidWaived: 0 };
   const [showOutstanding, setShowOutstanding] = React.useState(true);
   const outstanding = items.filter((it) => it.status === 'unpaid');
   const history = items.filter((it) => it.status !== 'unpaid');
@@ -15,6 +16,21 @@ export default function StudentFinesIndex() {
       <div className="py-12">
         <div className="mx-auto max-w-5xl sm:px-6 lg:px-8">
           <div className="bg-white shadow sm:rounded-lg p-6">
+            <h3 className="font-semibold mb-3">Ledger</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
+              <div className="p-4 border rounded">
+                <div className="text-sm text-gray-600">Total Outstanding</div>
+                <div className="text-2xl font-semibold">RM {Number(ledger.totalOutstanding || 0).toFixed(2)}</div>
+              </div>
+              <div className="p-4 border rounded">
+                <div className="text-sm text-gray-600">Total Fines Issued</div>
+                <div className="text-2xl font-semibold">RM {Number(ledger.totalIssued || 0).toFixed(2)}</div>
+              </div>
+              <div className="p-4 border rounded">
+                <div className="text-sm text-gray-600">Total Paid / Waived</div>
+                <div className="text-2xl font-semibold">RM {Number(ledger.totalPaidWaived || 0).toFixed(2)}</div>
+              </div>
+            </div>
             <div className="flex items-center gap-2 mb-4">
               <button onClick={() => setShowOutstanding(true)} className={`px-3 py-1 rounded ${showOutstanding ? 'bg-indigo-600 text-white' : 'bg-gray-100'}`}>Outstanding</button>
               <button onClick={() => setShowOutstanding(false)} className={`px-3 py-1 rounded ${!showOutstanding ? 'bg-indigo-600 text-white' : 'bg-gray-100'}`}>History</button>

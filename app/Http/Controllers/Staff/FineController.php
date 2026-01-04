@@ -61,7 +61,7 @@ class FineController extends Controller
             'students' => $students,
             'rooms' => $rooms,
             'categories' => Fine::CATEGORIES,
-            'statuses' => [Fine::STATUS_UNPAID, Fine::STATUS_PAID, Fine::STATUS_WAIVED],
+            'statuses' => [Fine::STATUS_UNPAID, Fine::STATUS_PENDING, Fine::STATUS_PAID, Fine::STATUS_WAIVED],
         ]);
     }
 
@@ -73,7 +73,7 @@ class FineController extends Controller
         return Inertia::render('Staff/Fines/Show', [
             'fine' => $fine,
             'categories' => Fine::CATEGORIES,
-            'statuses' => [Fine::STATUS_UNPAID, Fine::STATUS_PAID, Fine::STATUS_WAIVED],
+            'statuses' => [Fine::STATUS_UNPAID, Fine::STATUS_PENDING, Fine::STATUS_PAID, Fine::STATUS_WAIVED],
         ]);
     }
 
@@ -153,7 +153,7 @@ class FineController extends Controller
         $data = $request->validate([
             'amount_rm' => ['nullable','numeric','min:0'],
             'due_date' => ['nullable','date','after_or_equal:offence_date'],
-            'status' => ['nullable','in:'.implode(',', [Fine::STATUS_UNPAID, Fine::STATUS_PAID, Fine::STATUS_WAIVED])],
+            'status' => ['nullable','in:'.implode(',', [Fine::STATUS_UNPAID, Fine::STATUS_PENDING, Fine::STATUS_PAID, Fine::STATUS_WAIVED])],
         ]);
 
         $payload = [];
@@ -188,6 +188,33 @@ class FineController extends Controller
         ]);
 
         return back()->with('success', 'Fine updated');
+    }
+
+    public function approvePayment(Request $request, Fine $fine)
+    {
+        $staff = Staff::active()->where('user_id', $request->user()->id)->first();
+        if (!$staff || $staff->dorm_id !== $fine->dorm_id) abort(403, 'Not authorized');
+        // Require pending status and at least one payment proof
+        $hasProof = $fine->media()->where('type', 'payment')->exists();
+        if ($fine->status !== Fine::STATUS_PENDING || !$hasProof) {
+            return back()->with('error', 'Payment cannot be approved: missing proof or wrong status');
+        }
+        $fine->update([
+            'status' => Fine::STATUS_PAID,
+            'paid_at' => now(),
+        ]);
+
+        // Notify student about approval
+        UserNotification::create([
+            'user_id' => (int)$fine->student_id,
+            'type' => 'fine_payment_approved',
+            'data' => [
+                'fine_id' => $fine->id,
+                'fine_code' => $fine->fine_code,
+            ],
+        ]);
+
+        return back()->with('success', 'Payment approved. Fine marked as PAID');
     }
 
     public function notifyUpcoming(Request $request)
