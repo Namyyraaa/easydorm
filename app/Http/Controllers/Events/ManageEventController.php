@@ -116,6 +116,11 @@ class ManageEventController extends Controller
 
         $event->update($validated);
 
+        if (($validated['type'] ?? $event->type) === 'announcement') {
+            $event->attendance_password_hash = null;
+            $event->save();
+        }
+
         return redirect()->route('staff.events.show', $event);
     }
 
@@ -129,6 +134,9 @@ class ManageEventController extends Controller
     public function setPassword(Request $request, Event $event)
     {
         $this->ensureOwner($request, $event);
+        if ($event->type !== 'event') {
+            return back()->withErrors(['attendance_password' => 'Attendance password applies to events only.']);
+        }
         $validated = $request->validate([
             'attendance_password' => ['required','string','min:6'],
         ]);

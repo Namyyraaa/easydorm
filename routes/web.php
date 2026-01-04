@@ -15,6 +15,8 @@ use App\Http\Controllers\Admin\InventoryCategoryController;
 use App\Http\Controllers\Staff\InventoryItemController;
 use App\Http\Controllers\Staff\InventoryStockController;
 use App\Http\Controllers\Staff\InventoryTransactionController;
+use App\Http\Controllers\Staff\FineController as StaffFineController;
+use App\Http\Controllers\Student\FineController as StudentFineController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -38,6 +40,10 @@ Route::middleware('auth')->group(function () {
 
 // Student maintenance routes (auth + verified + student-only)
 Route::middleware(['auth','verified','student'])->prefix('student')->name('student.')->group(function() {
+    // Fines
+    Route::get('/fines', [StudentFineController::class, 'index'])->name('fines.index');
+    Route::get('/fines/{fine}', [StudentFineController::class, 'show'])->name('fines.show');
+    Route::post('/fines/{fine}/appeals', [StudentFineController::class, 'appeal'])->name('fines.appeal');
     Route::get('/maintenance', [StudentMaintenanceController::class, 'index'])->name('maintenance.index');
     Route::post('/maintenance', [StudentMaintenanceController::class, 'store'])->name('maintenance.store');
     Route::get('/maintenance/{maintenanceRequest}', [StudentMaintenanceController::class, 'show'])->name('maintenance.show');
@@ -76,6 +82,12 @@ require __DIR__.'/auth.php';
 
 // Staff routes
 Route::middleware(['auth', 'verified', 'staff'])->prefix('staff')->name('staff.')->group(function () {
+    // Fines
+    Route::get('/fines', [StaffFineController::class, 'index'])->name('fines.index');
+    Route::get('/fines/{fine}', [StaffFineController::class, 'show'])->name('fines.show');
+    Route::post('/fines', [StaffFineController::class, 'store'])->name('fines.store');
+    Route::patch('/fines/{fine}', [StaffFineController::class, 'update'])->name('fines.update');
+    Route::post('/fines/notify-upcoming', [StaffFineController::class, 'notifyUpcoming'])->name('fines.notifyUpcoming');
     Route::get('/residents', [ResidentsController::class, 'index'])->name('residents.index');
     Route::post('/residents/assign', [ResidentsController::class, 'assign'])->name('residents.assign');
     Route::post('/residents/assign-bulk', [ResidentsController::class, 'assignBulk'])->name('residents.assignBulk');
@@ -155,5 +167,6 @@ Route::middleware(['auth','verified','student'])->prefix('student')->name('stude
     Route::get('/events', [\App\Http\Controllers\Student\EventController::class, 'index'])->name('events.index');
     Route::get('/events/{event}', [\App\Http\Controllers\Student\EventController::class, 'show'])->name('events.show');
     Route::post('/events/{event}/register', [\App\Http\Controllers\Student\EventController::class, 'register'])->name('events.register');
+    Route::post('/events/{event}/revoke', [\App\Http\Controllers\Student\EventController::class, 'revoke'])->name('events.revoke');
     Route::post('/events/{event}/attend', [\App\Http\Controllers\Student\EventController::class, 'attend'])->name('events.attend');
 });

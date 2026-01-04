@@ -42,6 +42,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                         <NavLink href={route('staff.residents.index')} active={route().current('staff.residents.index')}>Residents</NavLink>
                                         <NavLink href={route('staff.maintenance.index')} active={route().current('staff.maintenance.index')}>Maintenance</NavLink>
                                         <NavLink href={route('staff.complaints.index')} active={route().current('staff.complaints.index')}>Complaints</NavLink>
+                                        <NavLink href={route('staff.fines.index')} active={route().current('staff.fines.index')}>Fines</NavLink>
                                         <NavLink href={route('staff.visitors.index')} active={route().current('staff.visitors.index')}>Visitors</NavLink>
                                         <NavLink href={route('staff.events.index')} active={route().current('staff.events.index')}>Events</NavLink>
                                         <NavLink href={route('staff.jakmas.index')} active={route().current('staff.jakmas.index')}>JAKMAS</NavLink>
@@ -76,6 +77,8 @@ export default function AuthenticatedLayout({ header, children }) {
                                     <>
                                         <NavLink href={route('student.maintenance.index')} active={route().current('student.maintenance.index')}>My Maintenance</NavLink>
                                         <NavLink href={route('student.complaints.index')} active={route().current('student.complaints.index')}>My Complaints</NavLink>
+                                        <NavLink href={route('student.fines.index')} active={route().current('student.fines.index')}>My Fines</NavLink>
+                                        <NavLink href={route('student.events.index')} active={route().current('student.events.index')}>Events</NavLink>
                                         {isJakmas && (
                                             <NavLink href={route('jakmas.events.index')} active={route().current('jakmas.events.index')}>JAKMAS Events</NavLink>
                                         )}
@@ -191,6 +194,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                 <ResponsiveNavLink href={route('staff.residents.index')} active={route().current('staff.residents.index')}>Residents</ResponsiveNavLink>
                                 <ResponsiveNavLink href={route('staff.maintenance.index')} active={route().current('staff.maintenance.index')}>Maintenance</ResponsiveNavLink>
                                 <ResponsiveNavLink href={route('staff.complaints.index')} active={route().current('staff.complaints.index')}>Complaints</ResponsiveNavLink>
+                                <ResponsiveNavLink href={route('staff.fines.index')} active={route().current('staff.fines.index')}>Fines</ResponsiveNavLink>
                                 <ResponsiveNavLink href={route('staff.visitors.index')} active={route().current('staff.visitors.index')}>Visitors</ResponsiveNavLink>
                                 <ResponsiveNavLink href={route('staff.events.index')} active={route().current('staff.events.index')}>Events</ResponsiveNavLink>
                                 <div className="px-4 pt-2 font-semibold text-xs text-gray-500 uppercase">Inventory</div>
@@ -203,6 +207,8 @@ export default function AuthenticatedLayout({ header, children }) {
                             <>
                                 <ResponsiveNavLink href={route('student.maintenance.index')} active={route().current('student.maintenance.index')}>My Maintenance</ResponsiveNavLink>
                                 <ResponsiveNavLink href={route('student.complaints.index')} active={route().current('student.complaints.index')}>My Complaints</ResponsiveNavLink>
+                                <ResponsiveNavLink href={route('student.fines.index')} active={route().current('student.fines.index')}>My Fines</ResponsiveNavLink>
+                                <ResponsiveNavLink href={route('student.events.index')} active={route().current('student.events.index')}>Events</ResponsiveNavLink>
                                 {isJakmas && (
                                     <ResponsiveNavLink href={route('jakmas.events.index')} active={route().current('jakmas.events.index')}>JAKMAS Events</ResponsiveNavLink>
                                 )}

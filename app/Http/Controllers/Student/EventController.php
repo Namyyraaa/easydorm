@@ -18,22 +18,41 @@ class EventController extends Controller
         $now = now();
         $events = Event::query()
             ->withCount('registrations')
+            ->where('type', 'event')
             ->where(function($q) use ($now) {
                 $q->whereNull('registration_opens_at')->orWhere('registration_opens_at','<=',$now);
             })
             ->orderBy('starts_at')
-            ->paginate(10);
+            ->paginate(10, ['*'], 'events_page');
+
+        $announcements = Event::query()
+            ->where('type', 'announcement')
+            ->orderByDesc('starts_at')
+            ->paginate(10, ['*'], 'announcements_page');
 
         return Inertia::render('Student/Events/Index', [
             'events' => $events,
+            'announcements' => $announcements,
         ]);
     }
 
-    public function show(Event $event)
+    public function show(Request $request, Event $event)
     {
+        $user = $request->user();
+        $now = now();
         $event->load(['media']);
+
+        $isRegistered = $event->registrations()
+            ->where('user_id', $user->id)
+            ->exists();
+
+        $isOpenWindow = (!$event->registration_opens_at || $now->gte($event->registration_opens_at))
+            && (!$event->registration_closes_at || $now->lte($event->registration_closes_at));
+
         return Inertia::render('Student/Events/Show', [
             'event' => $event,
+            'isRegistered' => $isRegistered,
+            'isRegistrationOpen' => $isOpenWindow,
         ]);
     }
 
@@ -41,6 +60,10 @@ class EventController extends Controller
     {
         $user = $request->user();
         $now = now();
+
+        if ($event->type !== 'event') {
+            return back()->withErrors(['registration' => 'Registration is only available for events.']);
+        }
 
         if ($event->registration_opens_at && $now->lt($event->registration_opens_at)) {
             return back()->withErrors(['registration' => 'Registration has not opened.']);
@@ -76,6 +99,17 @@ class EventController extends Controller
         $user = $request->user();
         $now = now();
 
+        if ($event->type !== 'event') {
+            return back()->withErrors(['attendance' => 'Attendance is only available for events.']);
+        }
+
+        $hasRegistration = $event->registrations()
+            ->where('user_id', $user->id)
+            ->exists();
+        if (!$hasRegistration) {
+            return back()->withErrors(['attendance' => 'You must be registered to attend this event.']);
+        }
+
         if ($now->lt($event->starts_at) || $now->gt($event->ends_at)) {
             return back()->withErrors(['attendance' => 'Attendance is only allowed during the event time.']);
         }
@@ -94,5 +128,34 @@ class EventController extends Controller
         ]);
 
         return back()->with('success', 'Attendance recorded.');
+    }
+
+    public function revoke(Request $request, Event $event)
+    {
+        $user = $request->user();
+        $now = now();
+
+        if ($event->type !== 'event') {
+            return back()->withErrors(['registration' => 'Revoking applies to events only.']);
+        }
+
+        if ($event->registration_opens_at && $now->lt($event->registration_opens_at)) {
+            return back()->withErrors(['registration' => 'Registration has not opened.']);
+        }
+        if ($event->registration_closes_at && $now->gt($event->registration_closes_at)) {
+            return back()->withErrors(['registration' => 'Registration is closed.']);
+        }
+
+        $registration = EventRegistration::where('event_id', $event->id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if (!$registration) {
+            return back()->withErrors(['registration' => 'You are not registered for this event.']);
+        }
+
+        $registration->delete();
+
+        return back()->with('success', 'Registration revoked.');
     }
 }

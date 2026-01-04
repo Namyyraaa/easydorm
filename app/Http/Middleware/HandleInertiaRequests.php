@@ -35,6 +35,20 @@ class HandleInertiaRequests extends Middleware
         $isStudent = $user ? (!$isSuperAdmin && !$isStaff) : false;
         $isJakmas = $user ? $user->isJakmas() : false;
 
+        $notifications = ['unread' => 0, 'latest' => []];
+        if ($user) {
+            try {
+                $unread = \App\Models\UserNotification::where('user_id', $user->id)->whereNull('read_at')->count();
+                $latest = \App\Models\UserNotification::where('user_id', $user->id)->latest()->limit(5)->get(['id','type','data','created_at','read_at']);
+                $notifications = [
+                    'unread' => $unread,
+                    'latest' => $latest,
+                ];
+            } catch (\Throwable $e) {
+                // In case table doesn't exist yet during initial migration
+            }
+        }
+
         return [
             ...parent::share($request),
             'auth' => [
@@ -48,6 +62,7 @@ class HandleInertiaRequests extends Middleware
                 'success' => $request->session()->get('success'),
                 'error' => $request->session()->get('error'),
             ],
+            'notifications' => $notifications,
         ];
     }
 }
