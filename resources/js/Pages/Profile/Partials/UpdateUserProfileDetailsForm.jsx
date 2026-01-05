@@ -2,7 +2,7 @@ import { useForm, usePage } from '@inertiajs/react';
 
 export default function UpdateUserProfileDetailsForm({ className = '' }) {
   const { props } = usePage();
-  const initial = props.profile || { gender: '', intake_session: '', faculty_id: '' };
+  const initial = props.profile || { gender: '', intake_session: '', faculty_id: '', interaction_style: '', daily_schedule: '' };
   const hobbies = props.hobbies || [];
   const userHobbies = (props.userHobbies || []).map(Number);
   const faculties = props.faculties || [];
@@ -11,6 +11,8 @@ export default function UpdateUserProfileDetailsForm({ className = '' }) {
     gender: initial.gender || '',
     intake_session: initial.intake_session || '',
     faculty_id: initial.faculty_id || '',
+    interaction_style: initial.interaction_style || '',
+    daily_schedule: initial.daily_schedule || '',
     hobby_ids: userHobbies,
   });
 
@@ -31,7 +33,7 @@ export default function UpdateUserProfileDetailsForm({ className = '' }) {
     <section className={className}>
       <header>
         <h2 className="text-lg font-medium text-gray-900">Profile Details</h2>
-        <p className="mt-1 text-sm text-gray-600">Update your gender, intake session, faculty and hobbies.</p>
+        <p className="mt-1 text-sm text-gray-600">Update your gender, intake session, faculty, interaction style, daily schedule and hobbies.</p>
       </header>
 
       <form onSubmit={submit} className="mt-6 space-y-6">
@@ -73,6 +75,35 @@ export default function UpdateUserProfileDetailsForm({ className = '' }) {
             ))}
           </select>
           {form.errors.faculty_id && <p className="text-sm text-red-600">{form.errors.faculty_id}</p>}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium">Interaction Style</label>
+          <select
+            className="mt-1 w-full border rounded p-2"
+            value={form.data.interaction_style}
+            onChange={(e) => form.setData('interaction_style', e.target.value)}
+          >
+            <option value="">Select interaction style</option>
+            <option value="quiet_and_independent">Quiet and Independent</option>
+            <option value="friendly_and_interactive">Friendly and Interactive</option>
+            <option value="flexible">Flexible</option>
+          </select>
+          {form.errors.interaction_style && <p className="text-sm text-red-600">{form.errors.interaction_style}</p>}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium">Daily Schedule</label>
+          <select
+            className="mt-1 w-full border rounded p-2"
+            value={form.data.daily_schedule}
+            onChange={(e) => form.setData('daily_schedule', e.target.value)}
+          >
+            <option value="">Select daily schedule</option>
+            <option value="consistent">Consistent</option>
+            <option value="variable">Variable</option>
+          </select>
+          {form.errors.daily_schedule && <p className="text-sm text-red-600">{form.errors.daily_schedule}</p>}
         </div>
 
         <div>

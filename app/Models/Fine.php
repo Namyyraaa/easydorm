@@ -101,9 +101,14 @@ class Fine extends Model
         return $this->belongsTo(Staff::class, 'issued_by_staff_id');
     }
 
-    public function media(): HasMany
+    public function evidences(): HasMany
     {
-        return $this->hasMany(FineMedia::class);
+        return $this->hasMany(FineEvidence::class);
+    }
+
+    public function paymentProofs(): HasMany
+    {
+        return $this->hasMany(FinePaymentProof::class);
     }
 
     public function appeals(): HasMany

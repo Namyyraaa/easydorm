@@ -15,6 +15,8 @@ class UserProfile extends Model
         'gender',
         'intake_session',
         'faculty_id',
+        'interaction_style',
+        'daily_schedule',
     ];
 
     public function user(): BelongsTo

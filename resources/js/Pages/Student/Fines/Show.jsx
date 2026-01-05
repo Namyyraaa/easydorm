@@ -53,7 +53,7 @@ export default function StudentFinesShow() {
           <div className="bg-white shadow sm:rounded-lg p-6">
             <h3 className="font-semibold mb-3">Evidence</h3>
             <div className="grid grid-cols-4 gap-3">
-              {(fine.media || []).map((m) => (
+              {(fine.evidences || []).map((m) => (
                 <a key={m.id} href={m.url} target="_blank" rel="noreferrer" className="block border rounded overflow-hidden">
                   {m.mime_type?.startsWith('image/') || m.type === 'image' ? (
                     <img src={m.url} alt={m.original_filename || 'evidence'} className="w-full h-32 object-cover" />
@@ -62,7 +62,7 @@ export default function StudentFinesShow() {
                   )}
                 </a>
               ))}
-              {(fine.media || []).length === 0 && <p className="text-sm text-gray-600">No attachments.</p>}
+              {(fine.evidences || []).length === 0 && <p className="text-sm text-gray-600">No attachments.</p>}
             </div>
           </div>
 
@@ -85,16 +85,16 @@ export default function StudentFinesShow() {
             <div className="mt-4">
               <h4 className="font-medium">Submitted Proofs</h4>
               <div className="grid grid-cols-4 gap-3 mt-2">
-                {(fine.media || []).filter((m) => m.type === 'payment').map((m) => (
-                  <a key={m.id} href={m.url ?? ('/storage/'+m.path)} target="_blank" rel="noreferrer" className="block border rounded overflow-hidden">
+                {(fine.paymentProofs || []).map((m) => (
+                  <a key={m.id} href={m.url} target="_blank" rel="noreferrer" className="block border rounded overflow-hidden">
                     {m.mime_type?.startsWith('image/') ? (
-                      <img src={m.url ?? ('/storage/'+m.path)} alt={m.original_filename || 'payment'} className="w-full h-32 object-cover" />
+                      <img src={m.url} alt={m.original_filename || 'payment'} className="w-full h-32 object-cover" />
                     ) : (
                       <div className="p-3 text-sm">{m.original_filename || 'Attachment'}</div>
                     )}
                   </a>
                 ))}
-                {(fine.media || []).filter((m) => m.type === 'payment').length === 0 && <p className="text-sm text-gray-600">No payment proofs yet.</p>}
+                {(fine.paymentProofs || []).length === 0 && <p className="text-sm text-gray-600">No payment proofs yet.</p>}
               </div>
             </div>
           </div>

@@ -217,4 +217,102 @@ class ResidentsController extends Controller
 
         return back()->with('success', 'Resident checked out');
     }
+
+    public function suggestions(Request $request)
+    {
+        $data = $request->validate([
+            'student_id' => ['required','integer','exists:users,id'],
+        ]);
+
+        $studentId = (int)$data['student_id'];
+
+        // Target profile and hobbies
+        $profile = DB::table('user_profiles')->where('user_id', $studentId)->first(['gender','faculty_id','interaction_style','daily_schedule']);
+        if (!$profile) {
+            return response()->json(['items' => []]);
+        }
+
+        $targetHobbyIds = DB::table('user_hobby')->where('user_id', $studentId)->pluck('hobby_id')->all();
+
+        // Build candidate pool: unassigned, non-staff, excluding the target
+        $candidates = DB::table('users as u')
+            ->leftJoin('staff as st', function ($join) {
+                $join->on('u.id', '=', 'st.user_id')
+                    ->whereNull('st.revoked_at')
+                    ->where('st.is_active', true);
+            })
+            ->leftJoin('resident_assignments as ra', function ($join) {
+                $join->on('u.id', '=', 'ra.student_id')
+                    ->whereNull('ra.revoked_at')
+                    ->where('ra.is_active', true);
+            })
+            ->leftJoin('user_profiles as up', 'u.id', '=', 'up.user_id')
+            ->where(function ($q) {
+                $q->whereNull('u.is_super_admin')->orWhere('u.is_super_admin', false);
+            })
+            ->whereNull('st.id')
+            ->whereNull('ra.id')
+            ->where('u.id', '!=', $studentId)
+            ->orderBy('u.name')
+            ->get(['u.id','u.name','u.email','up.gender','up.faculty_id','up.interaction_style','up.daily_schedule']);
+
+        if ($candidates->isEmpty()) {
+            return response()->json(['items' => []]);
+        }
+
+        // Load hobbies for all candidates in bulk
+        $candidateIds = $candidates->pluck('id')->all();
+        $hobbyRows = DB::table('user_hobby')->whereIn('user_id', $candidateIds)->get(['user_id','hobby_id']);
+        $hobbyMap = [];
+        foreach ($hobbyRows as $row) {
+            $hobbyMap[$row->user_id] = $hobbyMap[$row->user_id] ?? [];
+            $hobbyMap[$row->user_id][] = (int)$row->hobby_id;
+        }
+
+        $targetHobbySet = array_flip(array_map('intval', $targetHobbyIds));
+
+        $items = [];
+        foreach ($candidates as $c) {
+            $matches = [];
+            if (!empty($profile->gender) && $c->gender && $c->gender === $profile->gender) {
+                $matches[] = 'gender';
+            }
+            if (!empty($profile->faculty_id) && $c->faculty_id && (int)$c->faculty_id === (int)$profile->faculty_id) {
+                $matches[] = 'faculty';
+            }
+            if (!empty($profile->interaction_style) && $c->interaction_style && $c->interaction_style === $profile->interaction_style) {
+                $matches[] = 'interaction_style';
+            }
+            if (!empty($profile->daily_schedule) && $c->daily_schedule && $c->daily_schedule === $profile->daily_schedule) {
+                $matches[] = 'daily_schedule';
+            }
+            $candHobbies = $hobbyMap[$c->id] ?? [];
+            $hobbyMatch = false;
+            foreach ($candHobbies as $hid) {
+                if (isset($targetHobbySet[(int)$hid])) { $hobbyMatch = true; break; }
+            }
+            if ($hobbyMatch) {
+                $matches[] = 'hobby';
+            }
+
+            if (!empty($matches)) {
+                $items[] = [
+                    'id' => (int)$c->id,
+                    'name' => $c->name,
+                    'email' => $c->email,
+                    'matches' => $matches,
+                    'score' => count($matches),
+                ];
+            }
+        }
+
+        // Sort by score desc then name asc, take top 20
+        usort($items, function ($a, $b) {
+            if ($a['score'] === $b['score']) return strcmp($a['name'], $b['name']);
+            return $a['score'] < $b['score'] ? 1 : -1;
+        });
+        $items = array_slice($items, 0, 20);
+
+        return response()->json(['items' => $items]);
+    }
 }

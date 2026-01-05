@@ -27,7 +27,7 @@ class ProfileController extends Controller
         return Inertia::render('Profile/Edit', [
             'mustVerifyEmail' => $user instanceof MustVerifyEmail,
             'status' => session('status'),
-            'profile' => $profile->only(['gender','intake_session','faculty_id']),
+            'profile' => $profile->only(['gender','intake_session','faculty_id','interaction_style','daily_schedule']),
             'hobbies' => $hobbies,
             'userHobbies' => $userHobbyIds,
             'faculties' => $faculties,
@@ -57,6 +57,8 @@ class ProfileController extends Controller
             'gender' => ['nullable','in:male,female'],
             'intake_session' => ['nullable','regex:/^\\d{2}\\/\\d{2}$/'],
             'faculty_id' => ['nullable','integer','exists:faculties,id'],
+            'interaction_style' => ['nullable','in:quiet_and_independent,friendly_and_interactive,flexible'],
+            'daily_schedule' => ['nullable','in:consistent,variable'],
             'hobby_ids' => ['array'],
             'hobby_ids.*' => ['integer','exists:hobbies,id'],
         ]);
@@ -74,6 +76,8 @@ class ProfileController extends Controller
     $profile->gender = $data['gender'] ?? $profile->gender;
     $profile->intake_session = $data['intake_session'] ?? $profile->intake_session;
     $profile->faculty_id = array_key_exists('faculty_id', $data) ? $data['faculty_id'] : $profile->faculty_id;
+    $profile->interaction_style = array_key_exists('interaction_style', $data) ? $data['interaction_style'] : $profile->interaction_style;
+    $profile->daily_schedule = array_key_exists('daily_schedule', $data) ? $data['daily_schedule'] : $profile->daily_schedule;
     $profile->save();
 
         // Sync hobbies

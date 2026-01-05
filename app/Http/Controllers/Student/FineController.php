@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Fine;
 use App\Models\FineAppeal;
 use App\Models\FineAppealMedia;
-use App\Models\FineMedia;
+use App\Models\FinePaymentProof;
 use App\Models\UserNotification;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -34,7 +34,7 @@ class FineController extends Controller
     public function show(Request $request, Fine $fine): Response
     {
         if ($fine->student_id !== $request->user()->id) abort(403, 'Not authorized');
-        $fine->load(['room:id,room_number','block:id,name','issuer.user:id,name','media','appeals.media']);
+        $fine->load(['room:id,room_number','block:id,name','issuer.user:id,name','evidences','paymentProofs','appeals.media']);
         return Inertia::render('Student/Fines/Show', [
             'fine' => $fine,
         ]);
@@ -107,9 +107,8 @@ class FineController extends Controller
         Storage::disk('public')->putFileAs($dir, $file, $filename);
         $path = $dir.'/'.$filename;
 
-        FineMedia::create([
+        FinePaymentProof::create([
             'fine_id' => $fine->id,
-            'type' => 'payment',
             'path' => $path,
             'original_filename' => $file->getClientOriginalName(),
             'mime_type' => $mime,

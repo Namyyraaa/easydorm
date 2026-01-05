@@ -13,6 +13,9 @@ export default function Residents() {
   const assignForm = useForm({ student_id: '', room_id: '', check_in_date: '', check_out_date: ''});
   const bulkForm = useForm({ student_ids: [], room_id: '', check_in_date: '', check_out_date: ''});
   const [revokingId, setRevokingId] = useState(null);
+  const [suggestForId, setSuggestForId] = useState(null);
+  const [suggestions, setSuggestions] = useState([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
 
   // Derive selected student and gender for single assignment
   const selectedStudent = useMemo(() => students.find(s => String(s.id) === String(assignForm.data.student_id)), [students, assignForm.data.student_id]);
@@ -42,6 +45,22 @@ export default function Residents() {
       bulkForm.setData('room_id', '');
     }
   }, [filteredRoomsBulk, bulkForm.data.room_id]);
+
+  const fetchSuggestions = async (studentId) => {
+    if (!studentId) { setSuggestions([]); setSuggestForId(null); return; }
+    setLoadingSuggestions(true);
+    setSuggestForId(studentId);
+    try {
+      const url = route('staff.residents.suggestions', { student_id: studentId });
+      const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+      const data = await res.json();
+      setSuggestions(Array.isArray(data.items) ? data.items : []);
+    } catch (e) {
+      setSuggestions([]);
+    } finally {
+      setLoadingSuggestions(false);
+    }
+  };
 
   return (
     <AuthenticatedLayout
@@ -103,8 +122,9 @@ export default function Residents() {
                 <label className="block text-sm font-medium mb-2">Select Students</label>
                 <div className="max-h-56 overflow-auto border rounded p-2 space-y-1">
                   {students.map(s => (
-                    <label key={s.id} className="flex items-center gap-2">
-                      <input
+                    <div key={s.id} className="flex items-center gap-2 justify-between">
+                      <label className="flex items-center gap-2">
+                        <input
                         type="checkbox"
                         checked={bulkForm.data.student_ids.includes(s.id)}
                         disabled={
@@ -127,11 +147,16 @@ export default function Residents() {
                             bulkForm.setData('student_ids', bulkForm.data.student_ids.filter(id => id !== s.id));
                           }
                         }}
-                      />
-                      <span>
-                        {s.name} ({s.email}){s.gender ? ` — ${s.gender}` : ' — gender not set'}
-                      </span>
-                    </label>
+                        />
+                        <span>
+                          {s.name} ({s.email}){s.gender ? ` — ${s.gender}` : ' — gender not set'}
+                        </span>
+                      </label>
+                      <button type="button" className="text-xs px-2 py-1 bg-gray-100 rounded hover:bg-gray-200"
+                        onClick={() => fetchSuggestions(s.id)}>
+                        Suggest
+                      </button>
+                    </div>
                   ))}
                 </div>
                 {bulkForm.errors.student_ids && <p className="text-sm text-red-600">{bulkForm.errors.student_ids}</p>}
@@ -167,6 +192,56 @@ export default function Residents() {
               </div>
               <button type="submit" disabled={bulkForm.processing || bulkForm.data.student_ids.length === 0} className="px-4 py-2 bg-indigo-600 text-white rounded">Assign Selected</button>
             </form>
+          </div>
+        </div>
+
+        {/* Suggestions Panel */}
+        <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
+          <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg p-6">
+            <h3 className="font-semibold mb-3">Potential Roommates {suggestForId ? `for ${students.find(x => x.id === suggestForId)?.name || ''}` : ''}</h3>
+            {!suggestForId && (
+              <p className="text-sm text-gray-600">Click "Suggest" next to a student to see potential roommates based on hobby, faculty, gender, interaction style, or daily schedule.</p>
+            )}
+            {suggestForId && (
+              <div>
+                {loadingSuggestions ? (
+                  <p className="text-sm text-gray-600">Loading suggestions...</p>
+                ) : (
+                  <div className="space-y-2">
+                    {suggestions.map(item => (
+                      <div key={item.id} className="flex items-center justify-between border rounded p-2">
+                        <div>
+                          <div className="font-medium">{item.name}</div>
+                          <div className="text-xs text-gray-600">{item.email}</div>
+                          {Array.isArray(item.matches) && item.matches.length > 0 && (
+                            <div className="mt-1 flex flex-wrap gap-1">
+                              {item.matches.map((m, idx) => (
+                                <span key={idx} className="text-[10px] uppercase px-2 py-0.5 bg-gray-100 rounded">{m.replace('_',' ')}</span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <button type="button" className="text-xs px-2 py-1 bg-indigo-600 text-white rounded"
+                          onClick={() => {
+                            // Respect bulk gender selection rule
+                            const cand = students.find(s => String(s.id) === String(item.id));
+                            if (!cand) return;
+                            if (!bulkGender || (cand.gender && cand.gender === bulkGender)) {
+                              if (!bulkForm.data.student_ids.includes(cand.id)) {
+                                bulkForm.setData('student_ids', [...bulkForm.data.student_ids, cand.id]);
+                              }
+                            }
+                          }}
+                        >Add</button>
+                      </div>
+                    ))}
+                    {suggestions.length === 0 && (
+                      <p className="text-sm text-gray-600">No matching students found.</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Staff;
 
 use App\Http\Controllers\Controller;
 use App\Models\Fine;
-use App\Models\FineMedia;
+use App\Models\FineEvidence;
 use App\Models\ResidentAssignment;
 use App\Models\Room;
 use App\Models\Staff;
@@ -69,7 +69,7 @@ class FineController extends Controller
     {
         $staff = Staff::active()->where('user_id', $request->user()->id)->first();
         if (!$staff || $staff->dorm_id !== $fine->dorm_id) abort(403, 'Not authorized');
-        $fine->load(['student:id,name,email', 'room:id,room_number', 'block:id,name', 'issuer.user:id,name', 'media']);
+        $fine->load(['student:id,name,email', 'room:id,room_number', 'block:id,name', 'issuer.user:id,name', 'evidences', 'paymentProofs']);
         return Inertia::render('Staff/Fines/Show', [
             'fine' => $fine,
             'categories' => Fine::CATEGORIES,
@@ -195,7 +195,7 @@ class FineController extends Controller
         $staff = Staff::active()->where('user_id', $request->user()->id)->first();
         if (!$staff || $staff->dorm_id !== $fine->dorm_id) abort(403, 'Not authorized');
         // Require pending status and at least one payment proof
-        $hasProof = $fine->media()->where('type', 'payment')->exists();
+        $hasProof = $fine->paymentProofs()->exists();
         if ($fine->status !== Fine::STATUS_PENDING || !$hasProof) {
             return back()->with('error', 'Payment cannot be approved: missing proof or wrong status');
         }
@@ -258,7 +258,7 @@ class FineController extends Controller
             $dir = 'fines/'.$fine->id.'/evidence';
             Storage::disk('public')->putFileAs($dir, $file, $filename);
             $path = $dir.'/'.$filename;
-            FineMedia::create([
+            FineEvidence::create([
                 'fine_id' => $fine->id,
                 'type' => 'file',
                 'path' => $path,
@@ -276,7 +276,7 @@ class FineController extends Controller
             $dir = 'fines/'.$fine->id.'/evidence';
             Storage::disk('public')->putFileAs($dir, $file, $filename);
             $path = $dir.'/'.$filename;
-            FineMedia::create([
+            FineEvidence::create([
                 'fine_id' => $fine->id,
                 'type' => 'image',
                 'path' => $path,
@@ -315,7 +315,7 @@ class FineController extends Controller
             $filename = Str::uuid()->toString().'.jpg';
             $path = 'fines/'.$fine->id.'/evidence/'.$filename;
             Storage::disk('public')->put($path, $jpegData);
-            FineMedia::create([
+            FineEvidence::create([
                 'fine_id' => $fine->id,
                 'type' => 'image',
                 'path' => $path,
@@ -330,7 +330,7 @@ class FineController extends Controller
             $dir = 'fines/'.$fine->id.'/evidence';
             Storage::disk('public')->putFileAs($dir, $file, $filename);
             $path = $dir.'/'.$filename;
-            FineMedia::create([
+            FineEvidence::create([
                 'fine_id' => $fine->id,
                 'type' => 'image',
                 'path' => $path,

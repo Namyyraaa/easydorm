@@ -17,6 +17,7 @@ use App\Http\Controllers\Staff\InventoryStockController;
 use App\Http\Controllers\Staff\InventoryTransactionController;
 use App\Http\Controllers\Staff\FineController as StaffFineController;
 use App\Http\Controllers\Student\FineController as StudentFineController;
+use App\Http\Controllers\Staff\FineAppealController as StaffFineAppealController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -90,10 +91,16 @@ Route::middleware(['auth', 'verified', 'staff'])->prefix('staff')->name('staff.'
     Route::patch('/fines/{fine}', [StaffFineController::class, 'update'])->name('fines.update');
     Route::post('/fines/notify-upcoming', [StaffFineController::class, 'notifyUpcoming'])->name('fines.notifyUpcoming');
     Route::patch('/fines/{fine}/approve-payment', [StaffFineController::class, 'approvePayment'])->name('fines.approvePayment');
+
+    // Fine Appeals (Staff)
+    Route::get('/fine-appeals', [StaffFineAppealController::class, 'index'])->name('fineAppeals.index');
+    Route::get('/fine-appeals/{appeal}', [StaffFineAppealController::class, 'show'])->name('fineAppeals.show');
+    Route::patch('/fine-appeals/{appeal}/decide', [StaffFineAppealController::class, 'decide'])->name('fineAppeals.decide');
     Route::get('/residents', [ResidentsController::class, 'index'])->name('residents.index');
     Route::post('/residents/assign', [ResidentsController::class, 'assign'])->name('residents.assign');
     Route::post('/residents/assign-bulk', [ResidentsController::class, 'assignBulk'])->name('residents.assignBulk');
     Route::post('/residents/revoke', [ResidentsController::class, 'revoke'])->name('residents.revoke');
+    Route::get('/residents/suggestions', [ResidentsController::class, 'suggestions'])->name('residents.suggestions');
     // Maintenance
     Route::get('/maintenance', [StaffMaintenanceController::class, 'index'])->name('maintenance.index');
     Route::get('/maintenance/{maintenanceRequest}', [StaffMaintenanceController::class, 'show'])->name('maintenance.show');

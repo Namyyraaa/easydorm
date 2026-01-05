@@ -130,7 +130,7 @@ export default function StaffFinesIndex() {
           </div>
 
           <div className="bg-white shadow sm:rounded-lg p-6">
-            <h3 className="font-semibold mb-3">Fines List</h3>
+            <h3 className="font-semibold mb-3">Fines by Status</h3>
             <form onSubmit={applyFilters} className="grid grid-cols-2 gap-3 mb-4">
               <select className="border rounded p-2" value={filterForm.data.student_id} onChange={(e) => filterForm.setData('student_id', e.target.value)}>
                 <option value="">Filter by student</option>
@@ -155,19 +155,40 @@ export default function StaffFinesIndex() {
               <button type="submit" className="px-3 py-2 bg-gray-100 rounded">Apply Filters</button>
             </form>
 
-            <div className="divide-y">
-              {items.map((it) => (
-                <div key={it.id} className="py-3 flex items-center justify-between">
-                  <div>
-                    <div className="font-medium">{it.fine_code} — RM {Number(it.amount_rm).toFixed(2)}</div>
-                    <div className="text-sm text-gray-600">{it.category} • Due {new Date(it.due_date).toLocaleDateString()} • <span className="uppercase text-xs px-2 py-0.5 bg-gray-100 rounded">{it.status}</span></div>
-                    <div className="text-xs text-gray-500">{it.block?.name || ''} {it.room?.room_number ? `— Room ${it.room.room_number}` : ''}</div>
+            {(() => {
+              const group = (status) => items.filter((it) => it.status === status);
+              const renderGroup = (label, status) => {
+                const list = group(status);
+                return (
+                  <div key={status} className="mb-6">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="font-semibold">{label} <span className="ml-2 text-xs px-2 py-0.5 rounded bg-gray-100">{list.length}</span></h4>
+                    </div>
+                    <div className="divide-y">
+                      {list.map((it) => (
+                        <div key={it.id} className="py-3 flex items-center justify-between">
+                          <div>
+                            <div className="font-medium">{it.fine_code} — RM {Number(it.amount_rm).toFixed(2)}</div>
+                            <div className="text-sm text-gray-600">{it.category} • Due {new Date(it.due_date).toLocaleDateString()} • <span className="uppercase text-xs px-2 py-0.5 bg-gray-100 rounded">{it.status}</span></div>
+                            <div className="text-xs text-gray-500">{it.block?.name || ''} {it.room?.room_number ? `— Room ${it.room.room_number}` : ''}</div>
+                          </div>
+                          <Link href={route('staff.fines.show', it.id)} className="text-indigo-600 hover:underline">View</Link>
+                        </div>
+                      ))}
+                      {list.length === 0 && <p className="text-sm text-gray-600 py-3">No fines in this status.</p>}
+                    </div>
                   </div>
-                  <Link href={route('staff.fines.show', it.id)} className="text-indigo-600 hover:underline">View</Link>
+                );
+              };
+              return (
+                <div>
+                  {renderGroup('Unpaid', 'unpaid')}
+                  {renderGroup('Pending Review', 'pending')}
+                  {renderGroup('Paid', 'paid')}
+                  {renderGroup('Waived', 'waived')}
                 </div>
-              ))}
-              {items.length === 0 && <p className="text-sm text-gray-600">No fines found.</p>}
-            </div>
+              );
+            })()}
 
             <div className="mt-4">
               <form onSubmit={(e) => { e.preventDefault(); const fd = new FormData(); fd.append('days', '3'); fetch(route('staff.fines.notifyUpcoming'), { method: 'POST', headers: { 'X-CSRF-TOKEN': (document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '') }, body: fd }).then(() => window.location.reload()); }}>

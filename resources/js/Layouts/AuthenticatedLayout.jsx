@@ -43,6 +43,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                         <NavLink href={route('staff.maintenance.index')} active={route().current('staff.maintenance.index')}>Maintenance</NavLink>
                                         <NavLink href={route('staff.complaints.index')} active={route().current('staff.complaints.index')}>Complaints</NavLink>
                                         <NavLink href={route('staff.fines.index')} active={route().current('staff.fines.index')}>Fines</NavLink>
+                                        <NavLink href={route('staff.fineAppeals.index')} active={route().current('staff.fineAppeals.index')}>Fine Appeals</NavLink>
                                         <NavLink href={route('staff.visitors.index')} active={route().current('staff.visitors.index')}>Visitors</NavLink>
                                         <NavLink href={route('staff.events.index')} active={route().current('staff.events.index')}>Events</NavLink>
                                         <NavLink href={route('staff.jakmas.index')} active={route().current('staff.jakmas.index')}>JAKMAS</NavLink>
@@ -195,6 +196,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                 <ResponsiveNavLink href={route('staff.maintenance.index')} active={route().current('staff.maintenance.index')}>Maintenance</ResponsiveNavLink>
                                 <ResponsiveNavLink href={route('staff.complaints.index')} active={route().current('staff.complaints.index')}>Complaints</ResponsiveNavLink>
                                 <ResponsiveNavLink href={route('staff.fines.index')} active={route().current('staff.fines.index')}>Fines</ResponsiveNavLink>
+                                <ResponsiveNavLink href={route('staff.fineAppeals.index')} active={route().current('staff.fineAppeals.index')}>Fine Appeals</ResponsiveNavLink>
                                 <ResponsiveNavLink href={route('staff.visitors.index')} active={route().current('staff.visitors.index')}>Visitors</ResponsiveNavLink>
                                 <ResponsiveNavLink href={route('staff.events.index')} active={route().current('staff.events.index')}>Events</ResponsiveNavLink>
                                 <div className="px-4 pt-2 font-semibold text-xs text-gray-500 uppercase">Inventory</div>

@@ -71,7 +71,7 @@ export default function StaffFinesShow() {
           <div className="bg-white shadow sm:rounded-lg p-6">
             <h3 className="font-semibold mb-3">Evidence</h3>
             <div className="grid grid-cols-4 gap-3">
-              {(fine.media || []).map((m) => (
+              {(fine.evidences || []).map((m) => (
                 <a key={m.id} href={m.url} target="_blank" rel="noreferrer" className="block border rounded overflow-hidden">
                   {m.mime_type?.startsWith('image/') || m.type === 'image' ? (
                     <img src={m.url} alt={m.original_filename || 'evidence'} className="w-full h-32 object-cover" />
@@ -80,12 +80,12 @@ export default function StaffFinesShow() {
                   )}
                 </a>
               ))}
-              {(fine.media || []).length === 0 && <p className="text-sm text-gray-600">No attachments.</p>}
+              {(fine.evidences || []).length === 0 && <p className="text-sm text-gray-600">No attachments.</p>}
             </div>
             <div className="mt-4">
               <h4 className="font-medium">Payment Proofs</h4>
               <div className="grid grid-cols-4 gap-3 mt-2">
-                {(fine.media || []).filter((m) => m.type === 'payment').map((m) => (
+                {(fine.paymentProofs || []).map((m) => (
                   <a key={m.id} href={m.url} target="_blank" rel="noreferrer" className="block border rounded overflow-hidden">
                     {m.mime_type?.startsWith('image/') ? (
                       <img src={m.url} alt={m.original_filename || 'payment'} className="w-full h-32 object-cover" />
@@ -94,9 +94,9 @@ export default function StaffFinesShow() {
                     )}
                   </a>
                 ))}
-                {(fine.media || []).filter((m) => m.type === 'payment').length === 0 && <p className="text-sm text-gray-600">No payment proofs submitted.</p>}
+                {(fine.paymentProofs || []).length === 0 && <p className="text-sm text-gray-600">No payment proofs submitted.</p>}
               </div>
-              {fine.status === 'pending' && (fine.media || []).filter((m) => m.type === 'payment').length > 0 && (
+              {fine.status === 'pending' && (fine.paymentProofs || []).length > 0 && (
                 <form onSubmit={approvePayment} className="mt-3">
                   <button type="submit" disabled={approveForm.processing} className="px-4 py-2 bg-green-600 text-white rounded">Approve Payment (Mark as PAID)</button>
                 </form>
