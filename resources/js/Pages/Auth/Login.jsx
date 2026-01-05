@@ -26,12 +26,12 @@ export default function Login({ status, canResetPassword }) {
             <Head title="Log in" />
 
             {status && (
-                <div className="mb-4 text-sm font-medium text-green-600">
+                <div className="mb-4 text-sm font-medium text-violet-700">
                     {status}
                 </div>
             )}
 
-            <form onSubmit={submit}>
+            <form onSubmit={submit} className="text-violet-900">
                 <div>
                     <InputLabel htmlFor="email" value="Email" />
 
@@ -40,7 +40,7 @@ export default function Login({ status, canResetPassword }) {
                         type="email"
                         name="email"
                         value={data.email}
-                        className="mt-1 px-2 py-1 block w-full"
+                        className="mt-1 block w-full border-violet-200 focus:border-violet-500 focus:ring-violet-500 px-2 py-2"
                         autoComplete="username"
                         isFocused={true}
                         onChange={(e) => setData('email', e.target.value)}
@@ -57,7 +57,7 @@ export default function Login({ status, canResetPassword }) {
                         type="password"
                         name="password"
                         value={data.password}
-                        className="mt-1 px-2 py-1 block w-full"
+                        className="mt-1 block w-full border-violet-200 focus:border-violet-500 focus:ring-violet-500 px-2 py-2"
                         autoComplete="current-password"
                         onChange={(e) => setData('password', e.target.value)}
                     />
@@ -74,7 +74,7 @@ export default function Login({ status, canResetPassword }) {
                                 setData('remember', e.target.checked)
                             }
                         />
-                        <span className="ms-2 text-sm text-gray-600">
+                        <span className="ms-2 text-sm text-violet-700">
                             Remember me
                         </span>
                     </label>
@@ -84,13 +84,16 @@ export default function Login({ status, canResetPassword }) {
                     {canResetPassword && (
                         <Link
                             href={route('password.request')}
-                            className="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                            className="rounded-md text-sm text-violet-700 underline hover:text-violet-900 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2"
                         >
                             Forgot your password?
                         </Link>
                     )}
 
-                    <PrimaryButton className="ms-4" disabled={processing}>
+                    <PrimaryButton
+                        className="ms-4 bg-violet-600 hover:bg-violet-700 focus:bg-violet-700 focus:ring-violet-400"
+                        disabled={processing}
+                    >
                         Log in
                     </PrimaryButton>
                 </div>

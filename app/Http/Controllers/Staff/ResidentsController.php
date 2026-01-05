@@ -78,9 +78,30 @@ class ResidentsController extends Controller
 
         return Inertia::render('Staff/Residents', [
             'students' => $unassignedStudents,
-            'residents' => $currentResidents,
             'myDorm' => $staff?->dorm?->only(['id','name','code']),
             'rooms' => $rooms,
+        ]);
+    }
+
+    public function list(Request $request): Response
+    {
+        $staff = Staff::active()->where('user_id', $request->user()->id)->first();
+        $staffDormId = $staff->dorm_id ?? null;
+
+        $currentResidents = ResidentAssignment::active()
+            ->when($staffDormId, fn ($q) => $q->where('dorm_id', $staffDormId))
+            ->with([
+                'student:id,name,email',
+                'dorm:id,code,name',
+                'room:id,block_id,room_number,capacity',
+                'room.block:id,name,gender'
+            ])
+            ->orderByDesc('assigned_at')
+            ->get(['id','student_id','dorm_id','block_id','room_id','check_in_date','check_out_date','created_at','updated_at']);
+
+        return Inertia::render('Staff/ResidentsList', [
+            'residents' => $currentResidents,
+            'myDorm' => $staff?->dorm?->only(['id','name','code']),
         ]);
     }
 

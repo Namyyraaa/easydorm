@@ -1,4 +1,3 @@
-import ApplicationLogo from '@/Components/ApplicationLogo';
 import Dropdown from '@/Components/Dropdown';
 import NavLink from '@/Components/NavLink';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
@@ -18,14 +17,17 @@ export default function AuthenticatedLayout({ header, children }) {
         useState(false);
 
     return (
-        <div className="min-h-screen bg-gray-100">
-            <nav className="border-b border-gray-100 bg-white">
+        <div className="min-h-screen bg-violet-50 text-violet-900">
+            <nav className="border-b border-violet-200 bg-white/80 backdrop-blur">
                 <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                     <div className="flex h-16 justify-between">
                         <div className="flex">
                             <div className="flex shrink-0 items-center">
-                                <Link href="/">
-                                    <ApplicationLogo className="block h-9 w-auto fill-current text-gray-800" />
+                                <Link href="/" className="flex items-center gap-3">
+                                    <div className="h-9 w-9 rounded-md bg-violet-600/20 border border-violet-300 flex items-center justify-center text-[11px] font-semibold text-violet-700">
+                                        Logo
+                                    </div>
+                                    <span className="text-lg font-bold text-violet-700">ResiDorm</span>
                                 </Link>
                             </div>
 
@@ -39,11 +41,58 @@ export default function AuthenticatedLayout({ header, children }) {
                                 )}
                                 {isStaff && (
                                     <>
-                                        <NavLink href={route('staff.residents.index')} active={route().current('staff.residents.index')}>Residents</NavLink>
+                                        {(() => {
+                                            const residentsActive = route().current('staff.residents.list') || route().current('staff.residents.assignPage');
+                                            const base = 'inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium leading-5 transition duration-150 ease-in-out focus:outline-none';
+                                            const active = residentsActive
+                                                ? ' border-violet-400 text-violet-900 focus:border-violet-700'
+                                                : ' border-transparent text-gray-500 hover:border-violet-300 hover:text-violet-700 focus:border-violet-500 focus:text-violet-900';
+                                            return (
+                                                <div className={base + active}>
+                                                    <Dropdown>
+                                                        <Dropdown.Trigger>
+                                                            <button type="button" className="inline-flex items-center text-sm font-medium leading-5 text-inherit focus:outline-none h-16 cursor-pointer">
+                                                                Residents
+                                                                <svg className="-me-0.5 ms-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                                                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                                                                </svg>
+                                                            </button>
+                                                        </Dropdown.Trigger>
+                                                        <Dropdown.Content>
+                                                            <Dropdown.Link href={route('staff.residents.list')}>Residents List</Dropdown.Link>
+                                                            <Dropdown.Link href={route('staff.residents.assignPage')}>Resident Assignment</Dropdown.Link>
+                                                        </Dropdown.Content>
+                                                    </Dropdown>
+                                                </div>
+                                            );
+                                        })()}
                                         <NavLink href={route('staff.maintenance.index')} active={route().current('staff.maintenance.index')}>Maintenance</NavLink>
                                         <NavLink href={route('staff.complaints.index')} active={route().current('staff.complaints.index')}>Complaints</NavLink>
-                                        <NavLink href={route('staff.fines.index')} active={route().current('staff.fines.index')}>Fines</NavLink>
-                                        <NavLink href={route('staff.fineAppeals.index')} active={route().current('staff.fineAppeals.index')}>Fine Appeals</NavLink>
+                                        {(() => {
+                                            const finesActive = route().current('staff.fines.index') || route().current('staff.fineAppeals.index');
+                                            const base = 'inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium leading-5 transition duration-150 ease-in-out focus:outline-none';
+                                            const active = finesActive
+                                                ? ' border-violet-400 text-violet-900 focus:border-violet-700'
+                                                : ' border-transparent text-gray-500 hover:border-violet-300 hover:text-violet-700 focus:border-violet-500 focus:text-violet-900';
+                                            return (
+                                                <div className={base + active}>
+                                                    <Dropdown>
+                                                        <Dropdown.Trigger>
+                                                            <button type="button" className="inline-flex items-center text-sm font-medium leading-5 text-inherit focus:outline-none h-16 cursor-pointer">
+                                                                Fines
+                                                                <svg className="-me-0.5 ms-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                                                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                                                                </svg>
+                                                            </button>
+                                                        </Dropdown.Trigger>
+                                                        <Dropdown.Content>
+                                                            <Dropdown.Link href={route('staff.fines.index')}>Fine List</Dropdown.Link>
+                                                            <Dropdown.Link href={route('staff.fineAppeals.index')}>Fine Appeals</Dropdown.Link>
+                                                        </Dropdown.Content>
+                                                    </Dropdown>
+                                                </div>
+                                            );
+                                        })()}
                                         <NavLink href={route('staff.visitors.index')} active={route().current('staff.visitors.index')}>Visitors</NavLink>
                                         <NavLink href={route('staff.events.index')} active={route().current('staff.events.index')}>Events</NavLink>
                                         <NavLink href={route('staff.jakmas.index')} active={route().current('staff.jakmas.index')}>JAKMAS</NavLink>
@@ -51,7 +100,9 @@ export default function AuthenticatedLayout({ header, children }) {
                                         {(() => {
                                             const inventoryActive = route().current('staff.inventory.items.index') || route().current('staff.inventory.stock.index') || route().current('staff.inventory.transactions.index');
                                             const base = 'inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium leading-5 transition duration-150 ease-in-out focus:outline-none';
-                                            const active = inventoryActive ? ' border-indigo-400 text-gray-900 focus:border-indigo-700' : ' border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 focus:border-gray-300 focus:text-gray-700';
+                                            const active = inventoryActive
+                                                ? ' border-violet-400 text-violet-900 focus:border-violet-700'
+                                                : ' border-transparent text-gray-500 hover:border-violet-300 hover:text-violet-700 focus:border-violet-500 focus:text-violet-900';
                                             return (
                                                 <div className={base + active}>
                                                     <Dropdown>
@@ -79,9 +130,34 @@ export default function AuthenticatedLayout({ header, children }) {
                                         <NavLink href={route('student.maintenance.index')} active={route().current('student.maintenance.index')}>My Maintenance</NavLink>
                                         <NavLink href={route('student.complaints.index')} active={route().current('student.complaints.index')}>My Complaints</NavLink>
                                         <NavLink href={route('student.fines.index')} active={route().current('student.fines.index')}>My Fines</NavLink>
-                                        <NavLink href={route('student.events.index')} active={route().current('student.events.index')}>Events</NavLink>
-                                        {isJakmas && (
-                                            <NavLink href={route('jakmas.events.index')} active={route().current('jakmas.events.index')}>JAKMAS Events</NavLink>
+                                        {isJakmas ? (
+                                            (() => {
+                                                const eventsActive = route().current('student.events.index') || route().current('jakmas.events.index');
+                                                const base = 'inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium leading-5 transition duration-150 ease-in-out focus:outline-none';
+                                                const active = eventsActive
+                                                    ? ' border-violet-400 text-violet-900 focus:border-violet-700'
+                                                    : ' border-transparent text-gray-500 hover:border-violet-300 hover:text-violet-700 focus:border-violet-500 focus:text-violet-900';
+                                                return (
+                                                    <div className={base + active}>
+                                                        <Dropdown>
+                                                            <Dropdown.Trigger>
+                                                                <button type="button" className="inline-flex items-center text-sm font-medium leading-5 text-inherit focus:outline-none h-16 cursor-pointer">
+                                                                    Events
+                                                                    <svg className="-me-0.5 ms-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                                                        <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                                                                    </svg>
+                                                                </button>
+                                                            </Dropdown.Trigger>
+                                                            <Dropdown.Content>
+                                                                <Dropdown.Link href={route('student.events.index')}>Event List</Dropdown.Link>
+                                                                <Dropdown.Link href={route('jakmas.events.index')}>JAKMAS Events</Dropdown.Link>
+                                                            </Dropdown.Content>
+                                                        </Dropdown>
+                                                    </div>
+                                                );
+                                            })()
+                                        ) : (
+                                            <NavLink href={route('student.events.index')} active={route().current('student.events.index')}>Events</NavLink>
                                         )}
                                     </>
                                 )}
@@ -95,7 +171,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                         <span className="inline-flex rounded-md">
                                             <button
                                                 type="button"
-                                                className="inline-flex items-center rounded-md border border-transparent bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-500 transition duration-150 ease-in-out hover:text-gray-700 focus:outline-none"
+                                                className="inline-flex items-center rounded-md border border-transparent bg-white px-3 py-2 text-sm font-medium leading-4 text-violet-700 transition duration-150 ease-in-out hover:text-violet-900 focus:outline-none"
                                             >
                                                 {user.name}
 
@@ -192,14 +268,17 @@ export default function AuthenticatedLayout({ header, children }) {
                         )}
                         {isStaff && (
                             <>
-                                <ResponsiveNavLink href={route('staff.residents.index')} active={route().current('staff.residents.index')}>Residents</ResponsiveNavLink>
+                                <div className="px-4 pt-2 font-semibold text-xs text-violet-600 uppercase">Residents</div>
+                                <ResponsiveNavLink href={route('staff.residents.list')} active={route().current('staff.residents.list')}>Residents List</ResponsiveNavLink>
+                                <ResponsiveNavLink href={route('staff.residents.assignPage')} active={route().current('staff.residents.assignPage')}>Resident Assignment</ResponsiveNavLink>
                                 <ResponsiveNavLink href={route('staff.maintenance.index')} active={route().current('staff.maintenance.index')}>Maintenance</ResponsiveNavLink>
                                 <ResponsiveNavLink href={route('staff.complaints.index')} active={route().current('staff.complaints.index')}>Complaints</ResponsiveNavLink>
-                                <ResponsiveNavLink href={route('staff.fines.index')} active={route().current('staff.fines.index')}>Fines</ResponsiveNavLink>
+                                <div className="px-4 pt-2 font-semibold text-xs text-violet-600 uppercase">Fines</div>
+                                <ResponsiveNavLink href={route('staff.fines.index')} active={route().current('staff.fines.index')}>Fine List</ResponsiveNavLink>
                                 <ResponsiveNavLink href={route('staff.fineAppeals.index')} active={route().current('staff.fineAppeals.index')}>Fine Appeals</ResponsiveNavLink>
                                 <ResponsiveNavLink href={route('staff.visitors.index')} active={route().current('staff.visitors.index')}>Visitors</ResponsiveNavLink>
                                 <ResponsiveNavLink href={route('staff.events.index')} active={route().current('staff.events.index')}>Events</ResponsiveNavLink>
-                                <div className="px-4 pt-2 font-semibold text-xs text-gray-500 uppercase">Inventory</div>
+                                <div className="px-4 pt-2 font-semibold text-xs text-violet-600 uppercase">Inventory</div>
                                 <ResponsiveNavLink href={route('staff.inventory.items.index')} active={route().current('staff.inventory.items.index')}>Items</ResponsiveNavLink>
                                 <ResponsiveNavLink href={route('staff.inventory.stock.index')} active={route().current('staff.inventory.stock.index')}>Room Allocations</ResponsiveNavLink>
                                 <ResponsiveNavLink href={route('staff.inventory.transactions.index')} active={route().current('staff.inventory.transactions.index')}>Transactions</ResponsiveNavLink>
@@ -210,20 +289,25 @@ export default function AuthenticatedLayout({ header, children }) {
                                 <ResponsiveNavLink href={route('student.maintenance.index')} active={route().current('student.maintenance.index')}>My Maintenance</ResponsiveNavLink>
                                 <ResponsiveNavLink href={route('student.complaints.index')} active={route().current('student.complaints.index')}>My Complaints</ResponsiveNavLink>
                                 <ResponsiveNavLink href={route('student.fines.index')} active={route().current('student.fines.index')}>My Fines</ResponsiveNavLink>
-                                <ResponsiveNavLink href={route('student.events.index')} active={route().current('student.events.index')}>Events</ResponsiveNavLink>
-                                {isJakmas && (
-                                    <ResponsiveNavLink href={route('jakmas.events.index')} active={route().current('jakmas.events.index')}>JAKMAS Events</ResponsiveNavLink>
+                                {isJakmas ? (
+                                    <>
+                                        <div className="px-4 pt-2 font-semibold text-xs text-violet-600 uppercase">Events</div>
+                                        <ResponsiveNavLink href={route('student.events.index')} active={route().current('student.events.index')}>Event List</ResponsiveNavLink>
+                                        <ResponsiveNavLink href={route('jakmas.events.index')} active={route().current('jakmas.events.index')}>JAKMAS Events</ResponsiveNavLink>
+                                    </>
+                                ) : (
+                                    <ResponsiveNavLink href={route('student.events.index')} active={route().current('student.events.index')}>Events</ResponsiveNavLink>
                                 )}
                             </>
                         )}
                     </div>
 
-                    <div className="border-t border-gray-200 pb-1 pt-4">
+                    <div className="border-t border-violet-200 pb-1 pt-4">
                         <div className="px-4">
-                            <div className="text-base font-medium text-gray-800">
+                            <div className="text-base font-medium text-violet-800">
                                 {user.name}
                             </div>
-                            <div className="text-sm font-medium text-gray-500">
+                            <div className="text-sm font-medium text-violet-600">
                                 {user.email}
                             </div>
                         </div>

@@ -96,7 +96,9 @@ Route::middleware(['auth', 'verified', 'staff'])->prefix('staff')->name('staff.'
     Route::get('/fine-appeals', [StaffFineAppealController::class, 'index'])->name('fineAppeals.index');
     Route::get('/fine-appeals/{appeal}', [StaffFineAppealController::class, 'show'])->name('fineAppeals.show');
     Route::patch('/fine-appeals/{appeal}/decide', [StaffFineAppealController::class, 'decide'])->name('fineAppeals.decide');
-    Route::get('/residents', [ResidentsController::class, 'index'])->name('residents.index');
+    // Residents: split pages for list and assignment
+    Route::get('/residents/list', [ResidentsController::class, 'list'])->name('residents.list');
+    Route::get('/residents/assign', [ResidentsController::class, 'index'])->name('residents.assignPage');
     Route::post('/residents/assign', [ResidentsController::class, 'assign'])->name('residents.assign');
     Route::post('/residents/assign-bulk', [ResidentsController::class, 'assignBulk'])->name('residents.assignBulk');
     Route::post('/residents/revoke', [ResidentsController::class, 'revoke'])->name('residents.revoke');
