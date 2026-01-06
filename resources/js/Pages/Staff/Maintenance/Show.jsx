@@ -17,6 +17,34 @@ export default function StaffMaintenanceShow() {
 
   const [submitting, setSubmitting] = useState(false);
 
+  const humanize = (s) => (s || '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  const badgeClassFor = (s) => {
+    switch (s) {
+      case 'submitted':
+        return 'bg-gray-100 text-gray-800';
+      case 'reviewed':
+        return 'bg-sky-100 text-sky-800';
+      case 'in_progress':
+        return 'bg-amber-100 text-amber-800';
+      case 'completed':
+        return 'bg-green-100 text-green-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const formatManager = (value) => {
+    if (!value) return '—';
+    if (typeof value === 'object') {
+      if (value.name) return value.name;
+      return '—';
+    }
+    if (typeof value === 'number' || (typeof value === 'string' && value.trim().length > 0)) {
+      return `User #${value}`;
+    }
+    return '—';
+  };
+
   const updateStatus = (to) => {
     if (to !== expectedNext || submitting) return;
     setSubmitting(true);
@@ -52,7 +80,7 @@ export default function StaffMaintenanceShow() {
                 <h3 className="font-semibold text-lg mb-1">{item.title}</h3>
                 <p className="text-sm text-gray-600">By: {item.student?.name} — Created: {item.created_at ? new Date(item.created_at).toLocaleString() : ''}</p>
               </div>
-              <div className="text-xs uppercase px-3 py-1 rounded bg-gray-200">{item.status}</div>
+              <div className={`text-xs uppercase px-3 py-1 rounded ${badgeClassFor(item.status)} transition-shadow hover:ring-2 hover:ring-purple-300 hover:ring-offset-1`}>{humanize(item.status)}</div>
             </div>
             <MaintenanceStatusTimeline status={item.status} timestamps={{
               submitted_at: item.created_at,
@@ -60,6 +88,31 @@ export default function StaffMaintenanceShow() {
               in_progress_at: item.in_progress_at,
               completed_at: item.completed_at,
             }} />
+            {item.status !== 'submitted' && (
+              <div className="mt-4 p-3 bg-gray-50 rounded border">
+                <h4 className="font-medium mb-2">Managed By</h4>
+                <div className="space-y-1 text-sm text-gray-800">
+                  {item.reviewed_at && (
+                    <div>
+                      <span className="font-semibold">Reviewed By:</span> {formatManager(item.reviewedBy ?? item.reviewed_by)}
+                      <span className="text-gray-600"> — {new Date(item.reviewed_at).toLocaleString()}</span>
+                    </div>
+                  )}
+                  {item.in_progress_at && (
+                    <div>
+                      <span className="font-semibold">In Progress By:</span> {formatManager(item.inProgressBy ?? item.in_progress_by)}
+                      <span className="text-gray-600"> — {new Date(item.in_progress_at).toLocaleString()}</span>
+                    </div>
+                  )}
+                  {item.completed_at && (
+                    <div>
+                      <span className="font-semibold">Completed By:</span> {formatManager(item.completedBy ?? item.completed_by)}
+                      <span className="text-gray-600"> — {new Date(item.completed_at).toLocaleString()}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
             <p className="text-gray-800 whitespace-pre-wrap border-t pt-4">{item.description}</p>
 
             {item.media?.length > 0 && (

@@ -40,7 +40,15 @@ class MaintenanceRequestController extends Controller
         if ($maintenanceRequest->status === MaintenanceRequest::STATUS_SUBMITTED) {
             $maintenanceRequest->transitionStatus(MaintenanceRequest::STATUS_REVIEWED, $request->user()->id);
         }
-        $maintenanceRequest->load(['student:id,name,email','media','room:id,room_number','block:id,name']);
+        $maintenanceRequest->load([
+            'student:id,name,email',
+            'media',
+            'room:id,room_number',
+            'block:id,name',
+            'reviewedBy:id,name,email',
+            'inProgressBy:id,name,email',
+            'completedBy:id,name,email',
+        ]);
         return Inertia::render('Staff/Maintenance/Show', [
             'requestItem' => $maintenanceRequest,
         ]);
@@ -65,6 +73,12 @@ class MaintenanceRequestController extends Controller
         ];
         $allowedNext = $nextMap[$current] ?? null;
         if ($allowedNext && $data['status'] === $allowedNext) {
+            // Ownership rule: Only the staff who set In Progress can Complete
+            if ($current === MaintenanceRequest::STATUS_IN_PROGRESS && $allowedNext === MaintenanceRequest::STATUS_COMPLETED) {
+                if (!empty($maintenanceRequest->in_progress_by) && $maintenanceRequest->in_progress_by !== $request->user()->id) {
+                    return redirect()->route('staff.maintenance.show', $maintenanceRequest)->with('error', 'Only the staff who marked this In Progress can complete it.');
+                }
+            }
             $maintenanceRequest->transitionStatus($data['status'], $request->user()->id);
             return redirect()->route('staff.maintenance.show', $maintenanceRequest)->with('success', 'Status updated');
         }
@@ -77,6 +91,23 @@ class MaintenanceRequestController extends Controller
         if (!$staff || $staff->dorm_id !== $maintenanceRequest->dorm_id) {
             abort(403, 'Not authorized');
         }
+        // Disallow reverting Reviewed back to Submitted
+        if ($maintenanceRequest->status === MaintenanceRequest::STATUS_REVIEWED) {
+            return redirect()->route('staff.maintenance.show', $maintenanceRequest)->with('error', 'Reviewed status cannot be reverted.');
+        }
+
+        // Ownership rules for reverting from In Progress or Completed
+        if ($maintenanceRequest->status === MaintenanceRequest::STATUS_IN_PROGRESS) {
+            if (!empty($maintenanceRequest->in_progress_by) && $maintenanceRequest->in_progress_by !== $request->user()->id) {
+                return redirect()->route('staff.maintenance.show', $maintenanceRequest)->with('error', 'Only the staff who marked this In Progress can revert it.');
+            }
+        }
+        if ($maintenanceRequest->status === MaintenanceRequest::STATUS_COMPLETED) {
+            if (!empty($maintenanceRequest->completed_by) && $maintenanceRequest->completed_by !== $request->user()->id) {
+                return redirect()->route('staff.maintenance.show', $maintenanceRequest)->with('error', 'Only the staff who completed this can revert it.');
+            }
+        }
+
         // Compute previous status and set it, clearing later timestamps
         $prev = $maintenanceRequest->previousStatus();
         if (!$prev) {
