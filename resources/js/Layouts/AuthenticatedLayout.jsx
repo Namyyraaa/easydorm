@@ -24,9 +24,11 @@ export default function AuthenticatedLayout({ header, children }) {
                         <div className="flex">
                             <div className="flex shrink-0 items-center">
                                 <Link href="/" className="flex items-center gap-3">
-                                    <div className="h-9 w-9 rounded-md bg-violet-600/20 border border-violet-300 flex items-center justify-center text-[11px] font-semibold text-violet-700">
-                                        Logo
-                                    </div>
+                                    <img
+                                        src="/images/residormumslogo.png"
+                                        alt="ResiDorm logo"
+                                        className="h-9 w-auto rounded-md  object-contain"
+                                    />
                                     <span className="text-lg font-bold text-violet-700">ResiDorm</span>
                                 </Link>
                             </div>

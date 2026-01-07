@@ -1,32 +1,140 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, usePage } from '@inertiajs/react';
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 export default function StaffComplaintsIndex() {
   const { props } = usePage();
-  const items = props.items || [];
+  const raw = props.items || [];
+  const items = Array.isArray(raw) ? raw : (raw?.data || []);
+  const flash = props.flash || {};
+  const myStaffId = props.myStaffId;
+
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [claimFilter, setClaimFilter] = useState('all');
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+
+  const humanize = (s) => (s || '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  const badgeClassFor = (s) => {
+    switch (s) {
+      case 'submitted':
+        return 'bg-gray-100 text-gray-800';
+      case 'reviewed':
+        return 'bg-sky-100 text-sky-800';
+      case 'in_progress':
+        return 'bg-amber-100 text-amber-800';
+      case 'resolved':
+        return 'bg-green-100 text-green-800';
+      case 'dropped':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const statuses = useMemo(() => {
+    const s = new Set(items.map(r => r.status).filter(Boolean));
+    return ['all', ...Array.from(s)];
+  }, [items]);
+
+  const filtered = useMemo(() => {
+    return items.filter(r => (
+      (statusFilter === 'all' || r.status === statusFilter) &&
+      (
+        claimFilter === 'all' ||
+        (claimFilter === 'claimed' && !!r.managed_by_staff_id) ||
+        (claimFilter === 'unclaimed' && !r.managed_by_staff_id) ||
+        (claimFilter === 'by you' && myStaffId && r.managed_by_staff_id === myStaffId)
+      )
+    ));
+  }, [items, statusFilter, claimFilter, myStaffId]);
+
+  useEffect(() => { setPage(1); }, [statusFilter, claimFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const start = (page - 1) * pageSize;
+  const end = start + pageSize;
+  const displayItems = useMemo(() => filtered.slice(start, end), [filtered, start, end]);
 
   return (
     <AuthenticatedLayout header={<h2 className="text-xl font-semibold leading-tight text-gray-800">Complaints</h2>}>
       <Head title="Complaints" />
-      <div className="py-12">
-        <div className="mx-auto max-w-5xl sm:px-6 lg:px-8">
-          <div className="bg-white shadow sm:rounded-lg p-6">
-            <h3 className="font-semibold mb-3">Dorm Complaints</h3>
-            <div className="divide-y">
-              {items.map((it) => (
-                <div key={it.id} className="py-3 flex items-center justify-between">
-                  <div>
-                    <div className="font-medium">{it.title}</div>
-                    <div className="text-sm text-gray-600">{new Date(it.created_at).toLocaleString()} — <span className="uppercase text-xs px-2 py-0.5 bg-gray-100 rounded">{it.status}</span></div>
-                    <div className="text-xs text-gray-500">{it.managed_by_staff_id ? 'Claimed' : 'Unclaimed'}</div>
-                  </div>
-                  <Link href={route('staff.complaints.show', it.id)} className="text-indigo-600 hover:underline">View</Link>
-                </div>
-              ))}
-              {items.length === 0 && <p className="text-sm text-gray-600">No complaints found.</p>}
+      <div className="py-12 space-y-6">
+        {(flash.success || flash.error) && (
+          <div className={`mx-auto max-w-5xl sm:px-6 lg:px-8 ${flash.error ? 'text-red-800 bg-red-100' : 'text-green-800 bg-green-100'} border ${flash.error ? 'border-red-200' : 'border-green-200'} rounded p-3`}>{flash.error || flash.success}</div>
+        )}
+        <div className="mx-auto max-w-5xl sm:px-6 lg:px-8 bg-white shadow sm:rounded-lg p-6">
+          <h3 className="font-semibold mb-3">Dorm Complaints</h3>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex gap-3">
+              <div className="flex items-center">
+                <label className="text-sm text-gray-600">Status</label>
+                <select
+                  value={statusFilter}
+                  onChange={e => setStatusFilter(e.target.value)}
+                  className="ml-2 rounded border-gray-300 text-sm focus:outline-none transition-shadow hover:ring-2 hover:ring-purple-300 hover:ring-offset-1 focus:ring-2 focus:ring-purple-700 focus:ring-offset-1"
+                >
+                  {statuses.map(s => (
+                    <option key={s} value={s}>{s === 'all' ? 'All' : humanize(s)}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex items-center">
+                <label className="text-sm text-gray-600">Claim</label>
+                <select
+                  value={claimFilter}
+                  onChange={e => setClaimFilter(e.target.value)}
+                  className="ml-2 rounded border-gray-300 text-sm focus:outline-none transition-shadow hover:ring-2 hover:ring-purple-300 hover:ring-offset-1 focus:ring-2 focus:ring-purple-700 focus:ring-offset-1"
+                >
+                  {['all','claimed','unclaimed','by you'].map(b => (
+                    <option key={b} value={b}>{humanize(b)}</option>
+                  ))}
+                </select>
+              </div>
             </div>
+            <button onClick={() => { setStatusFilter('all'); setClaimFilter('all'); }} className="text-sm text-gray-600 hover:underline">Reset</button>
           </div>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-gray-600">
+                <th className="py-2 text-left">Title</th>
+                <th className="text-left">Status</th>
+                <th className="text-left">Claim</th>
+                <th className="text-left">Created</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {displayItems.map(it => (
+                <tr key={it.id} className="border-t">
+                  <td className="py-2">{it.title}</td>
+                  <td><span className={`uppercase text-xs px-2 py-0.5 rounded ${badgeClassFor(it.status)}`}>{humanize(it.status)}</span></td>
+                  <td className="text-xs text-gray-600">{it.managed_by_staff_id ? 'Claimed' : 'Unclaimed'}</td>
+                  <td>{it.created_at ? new Date(it.created_at).toLocaleString() : ''}</td>
+                  <td>
+                    <Link href={route('staff.complaints.show', it.id)} className="inline-flex items-center px-3 py-1 rounded bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-1">
+                      View
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+              {displayItems.length === 0 && (
+                <tr><td colSpan="5" className="py-3 text-gray-600">{items.length === 0 ? 'No complaints found.' : 'No matching complaints.'}</td></tr>
+              )}
+            </tbody>
+          </table>
+          {filtered.length > 0 && (
+            <div className="mt-4 flex items-center justify-between">
+              <div className="text-sm text-gray-600">Showing {start + 1} - {Math.min(end, filtered.length)} of {filtered.length}</div>
+              <div className="flex items-center gap-1">
+                <button disabled={page === 1} onClick={() => setPage(p => Math.max(1, p - 1))} className="px-2 py-1 rounded border text-sm disabled:opacity-50">Prev</button>
+                {Array.from({ length: totalPages }).map((_, i) => (
+                  <button key={i} onClick={() => setPage(i + 1)} className={`px-2 py-1 rounded border text-sm ${page === i + 1 ? 'bg-indigo-600 text-white border-indigo-600' : ''}`}>{i + 1}</button>
+                ))}
+                <button disabled={page === totalPages} onClick={() => setPage(p => Math.min(totalPages, p + 1))} className="px-2 py-1 rounded border text-sm disabled:opacity-50">Next</button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </AuthenticatedLayout>

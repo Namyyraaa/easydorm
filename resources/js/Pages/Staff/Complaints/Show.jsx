@@ -1,12 +1,14 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import React, { useState } from 'react';
+import MaintenanceStatusTimeline from '@/Components/MaintenanceStatusTimeline';
 
 export default function StaffComplaintShow() {
   const { props } = usePage();
   const complaint = props.complaint;
   const isManaging = !!props.isManaging;
   const managerName = props.managerName;
+  const studentName = props.studentName;
 
   const commentForm = useForm({ body: '' });
   const [submitting, setSubmitting] = useState(false);
@@ -63,43 +65,63 @@ export default function StaffComplaintShow() {
     });
   };
 
+  const formatTS = (ts) => {
+    if (!ts) return '';
+    return new Date(ts).toLocaleString([], {
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+    });
+  };
+
   return (
     <AuthenticatedLayout header={<h2 className="text-xl font-semibold leading-tight text-gray-800">Complaint</h2>}>
       <Head title="Complaint" />
       <div className="py-8">
         <div className="mx-auto max-w-4xl sm:px-6 lg:px-8 space-y-6">
-          <div className="bg-white shadow sm:rounded-lg p-6">
-            <div className="flex items-center justify-between">
+          <div className="bg-white shadow sm:rounded-lg p-6 space-y-4">
+            <div className="flex items-center">
               <div>
                 <div className="text-lg font-semibold">{complaint.title}</div>
-                <div className="text-sm text-gray-600">Status: <span className="uppercase text-xs px-2 py-0.5 bg-gray-100 rounded">{complaint.status}</span></div>
-                <div className="text-sm text-gray-600">Manager: {managerName || 'Unclaimed'}</div>
+                <div className="text-sm text-gray-600">By: {studentName || '—'} — Submitted at: {formatTS(complaint.created_at)}</div>
               </div>
-              <div className="flex gap-2">
-                <Link href={route('staff.complaints.index')} className="px-3 py-2 bg-gray-200 text-gray-800 rounded">Back</Link>
-                {!isManaging && !complaint.managed_by_staff_id && (
-                  <button onClick={claim} className="px-3 py-2 bg-indigo-600 text-white rounded">Claim</button>
-                )}
-                {canAdvance && advanceTo && (
-                  <button
-                    disabled={submitting}
-                    onClick={() => updateStatus(advanceTo)}
-                    className="px-3 py-2 bg-green-600 text-white rounded disabled:opacity-50"
-                  >
-                    {submitting ? 'Updating...' : `Mark ${advanceTo.replace('_',' ')}`}
-                  </button>
-                )}
-                {previousStatus && (
-                  <button
-                    disabled={submitting}
-                    onClick={revert}
-                    className="px-3 py-2 bg-gray-600 text-white rounded disabled:opacity-50"
-                  >
-                    {submitting ? 'Reverting...' : 'Revert'}
-                  </button>
-                )}
+              <div className={`ml-auto text-xs uppercase px-3 py-1 rounded ${(() => {
+                switch (complaint.status) {
+                  case 'submitted': return 'bg-gray-100 text-gray-800';
+                  case 'reviewed': return 'bg-sky-100 text-sky-800';
+                  case 'in_progress': return 'bg-amber-100 text-amber-800';
+                  case 'resolved': return 'bg-green-100 text-green-800';
+                  case 'dropped': return 'bg-red-100 text-red-800';
+                  default: return 'bg-gray-100 text-gray-800';
+                }
+              })()} transition-shadow hover:ring-2 hover:ring-purple-300 hover:ring-offset-1`}>
+                {(complaint.status || '').replace(/_/g,' ')}
               </div>
+              {!isManaging && !complaint.managed_by_staff_id && (
+                <button onClick={claim} className="ml-2 px-3 py-2 bg-indigo-600 text-white rounded">Claim</button>
+              )}
             </div>
+            <MaintenanceStatusTimeline
+              status={complaint.status}
+              steps={[
+                { key: 'reviewed', label: 'Reviewed' },
+                { key: 'in_progress', label: 'In Progress' },
+                { key: 'resolved', label: 'Resolved' },
+              ]}
+              timestamps={{
+                reviewed_at: complaint.reviewed_at,
+                in_progress_at: complaint.in_progress_at,
+                resolved_at: complaint.resolved_at,
+              }}
+              actors={{
+                reviewed: managerName,
+                in_progress: managerName,
+                resolved: managerName,
+              }}
+            />
+
             <div className="mt-4 whitespace-pre-wrap text-gray-800">{complaint.description}</div>
             {complaint.media && complaint.media.length > 0 && (
               <div className="mt-4 grid grid-cols-5 gap-2">
@@ -110,6 +132,27 @@ export default function StaffComplaintShow() {
                 ))}
               </div>
             )}
+            <div className="flex items-center gap-3 pt-4 border-t">
+              {canAdvance && advanceTo && (
+                <button
+                  disabled={submitting}
+                  onClick={() => updateStatus(advanceTo)}
+                  className={`px-3 py-1 ${advanceTo === 'in_progress' ? 'bg-amber-600' : 'bg-green-600'} text-white rounded disabled:opacity-50`}
+                >
+                  {advanceTo === 'in_progress' ? (submitting ? 'Updating...' : 'Mark as In Progress') : (submitting ? 'Updating...' : `Mark as ${advanceTo.replace('_',' ')}`)}
+                </button>
+              )}
+              {previousStatus && (
+                <button
+                  disabled={submitting}
+                  onClick={revert}
+                  className="px-3 py-1 bg-gray-600 text-white rounded disabled:opacity-50"
+                >
+                  {submitting ? 'Reverting...' : 'Revert'}
+                </button>
+              )}
+              <Link href={route('staff.complaints.index')} className="ml-auto px-3 py-1 bg-gray-200 text-gray-800 rounded">Back</Link>
+            </div>
           </div>
 
           <div className="bg-white shadow sm:rounded-lg p-6">

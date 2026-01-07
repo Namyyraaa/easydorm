@@ -25,6 +25,7 @@ class ComplaintController extends Controller
         // Do not expose student identity in staff UI (anonymous-only view)
         return Inertia::render('Staff/Complaints/Index', [
             'items' => $items,
+            'myStaffId' => $staff->id,
         ]);
     }
 
@@ -35,7 +36,8 @@ class ComplaintController extends Controller
             abort(403, 'Not authorized');
         }
         $isManaging = $complaint->managed_by_staff_id === $staff->id;
-        $complaint->load(['manager.user:id,name']);
+        $complaint->load(['manager.user:id,name','student:id,name']);
+        $studentName = $complaint->is_anonymous ? 'Anonymous' : optional($complaint->student)->name;
         if ($isManaging) {
             $complaint->load(['comments.user:id,name','media']);
 
@@ -61,6 +63,7 @@ class ComplaintController extends Controller
             'complaint' => $complaint,
             'isManaging' => $isManaging,
             'managerName' => optional(optional($complaint->manager)->user)->name,
+            'studentName' => $studentName,
         ]);
     }
 
