@@ -9,7 +9,7 @@ export default function StaffFinesIndex() {
   const rooms = props.rooms || [];
   const categories = props.categories || [];
   const flash = props.flash || {};
-  const initialTab = (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('tab')) || 'issue';
+  const initialTab = (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('tab')) || 'list';
   const [activeTab, setActiveTab] = useState(initialTab === 'list' ? 'list' : 'issue');
 
   // Fines list filters + pagination
@@ -111,6 +111,17 @@ export default function StaffFinesIndex() {
     return Array.from(map.entries()).map(([id, name]) => ({ id, name }));
   }, [rooms]);
 
+  const roomsForSelectedBlock = useMemo(() => {
+    const blockId = form.data.block_id;
+    if (!blockId) return [];
+    return rooms.filter(r => String(r.block_id) === String(blockId));
+  }, [rooms, form.data.block_id]);
+
+  useEffect(() => {
+    // Reset selected room when block changes
+    form.setData('room_id', '');
+  }, [form.data.block_id]);
+
   const onEvidenceChange = (files) => {
     const arr = Array.from(files || []);
     if (arr.length > 5) {
@@ -148,18 +159,18 @@ export default function StaffFinesIndex() {
 
         <div className="mx-auto max-w-6xl sm:px-6 lg:px-8">
           <div className="border-b border-violet-200 mb-6">
-            <nav className="-mb-px flex gap-6" aria-label="Tabs">
+            <nav className="-mb-px flex w-full" aria-label="Tabs">
               <button
                 type="button"
                 onClick={() => setActiveTab('issue')}
-                className={`whitespace-nowrap border-b-2 px-1 pb-2 text-sm font-medium ${activeTab === 'issue' ? 'border-violet-500 text-violet-800' : 'border-transparent text-gray-500 hover:text-violet-700 hover:border-violet-300'}`}
+                className={`whitespace-nowrap border-b-2 px-1 pb-2 text-sm font-medium flex-1 text-center order-2 ${activeTab === 'issue' ? 'border-violet-500 text-violet-800' : 'border-transparent text-gray-500 hover:text-violet-700 hover:border-violet-300'}`}
               >
                 Issue New Fine
               </button>
               <button
                 type="button"
                 onClick={() => setActiveTab('list')}
-                className={`whitespace-nowrap border-b-2 px-1 pb-2 text-sm font-medium ${activeTab === 'list' ? 'border-violet-500 text-violet-800' : 'border-transparent text-gray-500 hover:text-violet-700 hover:border-violet-300'}`}
+                className={`whitespace-nowrap border-b-2 px-1 pb-2 text-sm font-medium flex-1 text-center order-1 ${activeTab === 'list' ? 'border-violet-500 text-violet-800' : 'border-transparent text-gray-500 hover:text-violet-700 hover:border-violet-300'}`}
               >
                 Fines List
               </button>
@@ -180,16 +191,23 @@ export default function StaffFinesIndex() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
                     <label className="block text-sm font-medium text-violet-800">Block (optional)</label>
-                    <select className="mt-1 w-full rounded border border-violet-200 p-2 focus:border-violet-500 focus:ring-violet-500" value={form.data.block_id} onChange={(e) => form.setData('block_id', e.target.value)}>
-                      <option value="">Auto from resident</option>
+                    <select className="mt-1 w-full rounded border border-violet-200 p-2 focus:border-violet-500 focus:ring-violet-500 max-h-60 overflow-y-auto" value={form.data.block_id} onChange={(e) => form.setData('block_id', e.target.value)}>
+                      <option value="">Current block</option>
                       {blocks.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
                     </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-violet-800">Room (optional)</label>
-                    <select className="mt-1 w-full rounded border border-violet-200 p-2 focus:border-violet-500 focus:ring-violet-500" value={form.data.room_id} onChange={(e) => form.setData('room_id', e.target.value)}>
-                      <option value="">Auto from resident</option>
-                      {rooms.map(r => <option key={r.id} value={r.id}>{r.block} — {r.room_number}</option>)}
+                    <select
+                      className="mt-1 w-full rounded border border-violet-200 p-2 focus:border-violet-500 focus:ring-violet-500 max-h-60 overflow-y-auto disabled:opacity-50 disabled:cursor-not-allowed"
+                      value={form.data.room_id}
+                      onChange={(e) => form.setData('room_id', e.target.value)}
+                      disabled={!form.data.block_id}
+                    >
+                      <option value="">{form.data.block_id ? 'Current Room' : 'Auto'}</option>
+                      {roomsForSelectedBlock.map(r => (
+                        <option key={r.id} value={r.id}>{(r.block?.name || r.block || '')} — {r.room_number}</option>
+                      ))}
                     </select>
                   </div>
                 </div>
