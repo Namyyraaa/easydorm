@@ -9,12 +9,14 @@ export default function StaffFinesIndex() {
   const rooms = props.rooms || [];
   const categories = props.categories || [];
   const flash = props.flash || {};
-  const [activeTab, setActiveTab] = useState('issue');
+  const initialTab = (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('tab')) || 'issue';
+  const [activeTab, setActiveTab] = useState(initialTab === 'list' ? 'list' : 'issue');
 
   // Fines list filters + pagination
   const [statusFilter, setStatusFilter] = useState('all');
   const [blockFilter, setBlockFilter] = useState('all');
   const [roomFilter, setRoomFilter] = useState('all');
+  const [searchStudentId, setSearchStudentId] = useState(null);
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
@@ -39,6 +41,18 @@ export default function StaffFinesIndex() {
     }
   };
 
+  const formatDateTime = (dt) => {
+    if (!dt) return '';
+    try {
+      return new Date(dt).toLocaleString(undefined, {
+        year: 'numeric', month: 'short', day: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+      });
+    } catch {
+      return '';
+    }
+  };
+
   const listStatuses = useMemo(() => {
     const s = new Set(items.map(r => r.status).filter(Boolean));
     return ['all', ...Array.from(s)];
@@ -50,7 +64,8 @@ export default function StaffFinesIndex() {
   }, [items]);
 
   const roomOptions = useMemo(() => {
-    const filteredByBlock = items.filter(r => (blockFilter === 'all' || r.block?.name === blockFilter));
+    if (blockFilter === 'all') return ['all'];
+    const filteredByBlock = items.filter(r => (r.block?.name === blockFilter));
     const set = new Set(filteredByBlock.map(r => r.room?.room_number).filter(Boolean));
     return ['all', ...Array.from(set)];
   }, [items, blockFilter]);
@@ -59,12 +74,25 @@ export default function StaffFinesIndex() {
     return items.filter(r => (
       (statusFilter === 'all' || r.status === statusFilter) &&
       (blockFilter === 'all' || r.block?.name === blockFilter) &&
-      (roomFilter === 'all' || r.room?.room_number === roomFilter)
+      (roomFilter === 'all' || r.room?.room_number === roomFilter) &&
+      (searchStudentId == null || String(r.student?.id) === String(searchStudentId))
     ));
-  }, [items, statusFilter, blockFilter, roomFilter]);
+  }, [items, statusFilter, blockFilter, roomFilter, searchStudentId]);
 
   useEffect(() => { setPage(1); }, [statusFilter, blockFilter, roomFilter]);
   useEffect(() => { setRoomFilter('all'); }, [blockFilter]);
+
+  // Persist active tab to URL so back/refresh keeps the same tab
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    if (activeTab === 'issue') {
+      url.searchParams.delete('tab');
+    } else {
+      url.searchParams.set('tab', 'list');
+    }
+    window.history.replaceState({}, '', url);
+  }, [activeTab]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const start = (page - 1) * pageSize;
@@ -228,6 +256,15 @@ export default function StaffFinesIndex() {
               <h3 className="font-semibold mb-3">Fines List</h3>
               <div className="flex items-center justify-between mb-4">
                 <div className="flex gap-3">
+                  <div className="flex items-center w-64">
+                    <ResidentSearch
+                      label=""
+                      compact
+                      students={students}
+                      valueId={searchStudentId}
+                      onSelect={(s) => setSearchStudentId(s?.id ?? null)}
+                    />
+                  </div>
                   <div className="flex items-center">
                     <label className="text-sm text-gray-600">Status</label>
                     <select
@@ -257,7 +294,8 @@ export default function StaffFinesIndex() {
                     <select
                       value={roomFilter}
                       onChange={e => setRoomFilter(e.target.value)}
-                      className="ml-2 rounded border-gray-300 text-sm max-w-[16rem] max-h-60 overflow-y-auto focus:outline-none transition-shadow hover:ring-2 hover:ring-purple-300 hover:ring-offset-1 focus:ring-2 focus:ring-purple-700 focus:ring-offset-1"
+                      disabled={blockFilter === 'all'}
+                      className="ml-2 rounded border-gray-300 text-sm max-w-[16rem] max-h-60 overflow-y-auto focus:outline-none transition-shadow hover:ring-2 hover:ring-purple-300 hover:ring-offset-1 focus:ring-2 focus:ring-purple-700 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {roomOptions.map(r => (
                         <option key={r} value={r}>{r === 'all' ? 'All' : r}</option>
@@ -265,7 +303,7 @@ export default function StaffFinesIndex() {
                     </select>
                   </div>
                 </div>
-                <button onClick={() => { setStatusFilter('all'); setBlockFilter('all'); setRoomFilter('all'); }} className="text-sm text-gray-600 hover:underline">Reset</button>
+                <button onClick={() => { setStatusFilter('all'); setBlockFilter('all'); setRoomFilter('all'); setSearchStudentId(null); }} className="text-sm text-gray-600 hover:underline">Reset</button>
               </div>
 
               <table className="w-full text-sm">
@@ -290,7 +328,7 @@ export default function StaffFinesIndex() {
                       <td>{it.block?.name || '-'}</td>
                       <td>{it.room?.room_number || '-'}</td>
                       <td><span className={`uppercase text-xs px-2 py-0.5 rounded ${badgeClassFor(it.status)} transition-shadow hover:ring-2 hover:ring-purple-300 hover:ring-offset-1`}>{humanize(it.status)}</span></td>
-                      <td>{it.issued_at ? new Date(it.issued_at).toLocaleString() : ''}</td>
+                      <td>{formatDateTime(it.issued_at)}</td>
                       <td>
                         <Link href={route('staff.fines.show', it.id)} className="inline-flex items-center px-3 py-1 rounded bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-1">
                           View
@@ -330,7 +368,7 @@ export default function StaffFinesIndex() {
   );
 }
 
-function ResidentSearch({ students, valueId, onSelect, error }) {
+function ResidentSearch({ students, valueId, onSelect, error, label = 'Resident', compact = false }) {
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
   const [open, setOpen] = useState(false);
@@ -378,11 +416,13 @@ function ResidentSearch({ students, valueId, onSelect, error }) {
 
   return (
     <div className="relative">
-      <label className="block text-sm font-medium text-violet-800">Resident</label>
-      <div className="mt-1 relative">
+      {label ? (
+        <label className="block text-sm font-medium text-violet-800">{label}</label>
+      ) : null}
+      <div className={`${label ? 'mt-1 ' : ''}relative`}>
         <input
           type="text"
-          className={`w-full rounded border border-violet-200 p-2 pr-9 focus:border-violet-500 focus:ring-violet-500 ${selected ? 'bg-violet-50' : ''}`}
+          className={`w-full rounded border border-violet-200 ${compact ? 'p-1.5 text-sm' : 'p-2'} pr-9 focus:border-violet-500 focus:ring-violet-500 ${selected ? 'bg-violet-50' : ''}`}
           placeholder="Search by name or ID..."
           value={query}
           onChange={(e) => { if (selected) setSelected(null); setQuery(e.target.value); }}
