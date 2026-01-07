@@ -91,6 +91,7 @@ class FineController extends Controller
             'reason' => ['nullable','string','max:3000'],
             'offence_date' => ['required','date'],
             'due_date' => ['required','date','after_or_equal:offence_date'],
+            'evidence' => ['array','max:5'],
             'evidence.*' => ['file','mimes:jpeg,jpg,png,webp,pdf','max:5120'],
         ]);
 

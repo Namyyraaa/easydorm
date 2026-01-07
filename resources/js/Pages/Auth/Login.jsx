@@ -22,7 +22,25 @@ export default function Login({ status, canResetPassword }) {
     };
 
     return (
-        <GuestLayout>
+        <GuestLayout
+            top={
+                <div className="flex flex-col items-center text-center">
+                    <div className="flex items-center justify-center gap-3 pb-2">
+                        <img
+                            src="/images/residormumslogo.png"
+                            alt="ResiDorm logo"
+                            className="h-14 w-auto object-contain"
+                        />
+                        <span className="text-2xl font-extrabold tracking-tight text-violet-800">
+                            ResiDorm
+                        </span>
+                    </div>
+                    <p className="text-sm text-violet-800">
+                        Sign in to manage dorm life, maintenance, events, and more.
+                    </p>
+                </div>
+            }
+        >
             <Head title="Log in" />
 
             {status && (

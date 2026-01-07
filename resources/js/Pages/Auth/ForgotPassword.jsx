@@ -1,4 +1,5 @@
 import InputError from '@/Components/InputError';
+import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import GuestLayout from '@/Layouts/GuestLayout';
@@ -16,14 +17,26 @@ export default function ForgotPassword({ status }) {
     };
 
     return (
-        <GuestLayout>
+        <GuestLayout
+            top={
+                <div className="flex flex-col items-center text-center">
+                    <div className="flex items-center justify-center gap-3 pb-2">
+                        <img
+                            src="/images/residormumslogo.png"
+                            alt="ResiDorm logo"
+                            className="h-14 w-auto object-contain"
+                        />
+                        <span className="text-2xl font-extrabold tracking-tight text-violet-800">
+                            ResiDorm
+                        </span>
+                    </div>
+                    <p className="text-sm text-violet-800">
+                        Forgot your password? No problem! Just provide your email address and we will email you a password reset link.
+                    </p>
+                </div>
+            }
+        >
             <Head title="Forgot Password" />
-
-            <div className="mb-4 text-sm text-gray-600">
-                Forgot your password? No problem. Just let us know your email
-                address and we will email you a password reset link that will
-                allow you to choose a new one.
-            </div>
 
             {status && (
                 <div className="mb-4 text-sm font-medium text-green-600">
@@ -31,13 +44,14 @@ export default function ForgotPassword({ status }) {
                 </div>
             )}
 
-            <form onSubmit={submit}>
+            <form onSubmit={submit} className="text-violet-900">
+                <InputLabel htmlFor="email" value="Insert your email address:" />
                 <TextInput
                     id="email"
                     type="email"
                     name="email"
                     value={data.email}
-                    className="mt-1 block w-full"
+                    className="mt-1 block w-full border-violet-200 focus:border-violet-500 focus:ring-violet-500 px-2 py-2"
                     isFocused={true}
                     onChange={(e) => setData('email', e.target.value)}
                 />

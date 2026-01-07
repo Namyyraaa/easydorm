@@ -16,6 +16,13 @@ export default function AuthenticatedLayout({ header, children }) {
     const [showingNavigationDropdown, setShowingNavigationDropdown] =
         useState(false);
 
+    // Display only the first two words of the user's name
+    const displayName = (() => {
+        const full = (user?.name || '').trim();
+        const words = full.split(/\s+/).filter(Boolean);
+        return words.slice(0, 2).join(' ');
+    })();
+
     return (
         <div className="min-h-screen bg-violet-50 text-violet-900">
             <nav className="border-b border-violet-200 bg-white/80 backdrop-blur">
@@ -175,7 +182,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                                 type="button"
                                                 className="inline-flex items-center rounded-md border border-transparent bg-white px-3 py-2 text-sm font-medium leading-4 text-violet-700 transition duration-150 ease-in-out hover:text-violet-900 focus:outline-none"
                                             >
-                                                {user.name}
+                                                <span className="max-w-[160px] overflow-hidden text-ellipsis whitespace-nowrap">{displayName}</span>
 
                                                 <svg
                                                     className="-me-0.5 ms-2 h-4 w-4"
@@ -194,6 +201,9 @@ export default function AuthenticatedLayout({ header, children }) {
                                     </Dropdown.Trigger>
 
                                     <Dropdown.Content>
+                                        <div className="px-3 py-2 w-52 whitespace-normal break-words text-sm font-medium text-violet-800 border-b border-violet-200">
+                                            {user.name}
+                                        </div>
                                         <Dropdown.Link
                                             href={route('profile.edit')}
                                         >
