@@ -24,7 +24,7 @@ export default function Welcome({ auth }) {
                                 className="mx-auto mb-4 sm:mb-6 h-16 w-auto object-contain"
                             />
                             <h1 className="text-4xl font-extrabold tracking-tight text-violet-800 ">
-                                Welcome to ResiDorm
+                                Welcome to ResiDorms
                             </h1>
                             <p className="mt-6 text-base  leading-relaxed text-violet-800">
                                 ResiDorm is a comprehensive dormitory management system that streamlines resident assignments,
