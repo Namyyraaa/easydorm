@@ -32,6 +32,11 @@ class Jakmas extends Model
         return $this->belongsTo(Dorm::class);
     }
 
+    public function revokedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'revoked_by');
+    }
+
     protected function casts(): array
     {
         return [

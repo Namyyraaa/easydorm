@@ -14,7 +14,7 @@ class JakmasController extends Controller
     public function index(Request $request)
     {
         $jakmas = Jakmas::query()
-            ->with(['user:id,name,email', 'dorm:id,name'])
+            ->with(['user:id,name,email', 'dorm:id,name', 'revokedBy:id,name'])
             ->orderByDesc('assigned_at')
             ->paginate(10);
 
