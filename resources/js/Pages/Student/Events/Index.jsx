@@ -5,6 +5,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 export default function Index({ events, announcements }) {
   const { props } = usePage();
   const userId = props?.auth?.user?.id;
+  const serverRegisteredIds = (props?.userRegisteredEventIds || []).map(String);
 
   const raw = events || [];
   const items = Array.isArray(raw) ? raw : (raw?.data || []);
@@ -35,17 +36,43 @@ export default function Index({ events, announcements }) {
 
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
+  const [registeredOnly, setRegisteredOnly] = useState(false);
   const [page, setPage] = useState(1);
   const pageSize = 10;
+
+  // Registration helpers/state must be declared before filters to avoid TDZ
+  const isRegistered = (e) => {
+    const direct = e?.is_registered ?? e?.registered ?? e?.user_is_registered ?? e?.attending ?? e?.user_registration;
+    if (direct) return true;
+    const regs = e?.registrations;
+    if (Array.isArray(regs) && userId != null) {
+      return regs.some(r => String(r?.user_id ?? r?.userId ?? r?.id) === String(userId));
+    }
+    return false;
+  };
+
+  const [registeringId, setRegisteringId] = useState(null);
+  const [registeredIds, setRegisteredIds] = useState(() => {
+    const map = {};
+    serverRegisteredIds.forEach(id => { map[id] = true; });
+    return map;
+  });
+
+  useEffect(() => {
+    const map = {};
+    serverRegisteredIds.forEach(id => { map[id] = true; });
+    setRegisteredIds(map);
+  }, [serverRegisteredIds.join(',')]);
 
   const filtered = useMemo(() => {
     return items.filter(e => (
       (statusFilter === 'all' || e.visibility === statusFilter)
       && (typeFilter === 'all' || e.type === typeFilter)
+      && (!registeredOnly || isRegistered(e) || registeredIds[e.id])
     ));
-  }, [items, statusFilter, typeFilter]);
+  }, [items, statusFilter, typeFilter, registeredOnly, registeredIds]);
 
-  useEffect(() => { setPage(1); }, [statusFilter, typeFilter]);
+  useEffect(() => { setPage(1); }, [statusFilter, typeFilter, registeredOnly]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const start = (page - 1) * pageSize;
@@ -77,18 +104,7 @@ export default function Index({ events, announcements }) {
   const annEnd = annStart + annPageSize;
   const annDisplayItems = useMemo(() => annFiltered.slice(annStart, annEnd), [annFiltered, annStart, annEnd]);
 
-  const isRegistered = (e) => {
-    const direct = e?.is_registered ?? e?.registered ?? e?.user_is_registered ?? e?.attending ?? e?.user_registration;
-    if (direct) return true;
-    const regs = e?.registrations;
-    if (Array.isArray(regs) && userId != null) {
-      return regs.some(r => String(r?.user_id ?? r?.userId ?? r?.id) === String(userId));
-    }
-    return false;
-  };
-
-  const [registeringId, setRegisteringId] = useState(null);
-  const [registeredIds, setRegisteredIds] = useState({});
+  
   const handleRegister = (id) => {
     setRegisteringId(id);
     router.post(route('student.events.register', id), {}, {
@@ -214,8 +230,12 @@ export default function Index({ events, announcements }) {
                     ))}
                   </select>
                 </div>
+                <div className="flex items-center">
+                  <input id="registeredOnly" type="checkbox" checked={registeredOnly} onChange={e => setRegisteredOnly(e.target.checked)} />
+                  <label htmlFor="registeredOnly" className="ml-2 text-sm text-gray-600">Registered only</label>
+                </div>
               </div>
-              <button onClick={() => { setStatusFilter('all'); setTypeFilter('all'); }} className="text-sm text-gray-600 hover:underline">Reset</button>
+              <button onClick={() => { setStatusFilter('all'); setTypeFilter('all'); setRegisteredOnly(false); }} className="text-sm text-gray-600 hover:underline">Reset</button>
             </div>
 
             <table className="w-full text-sm">

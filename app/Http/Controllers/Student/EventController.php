@@ -15,6 +15,7 @@ class EventController extends Controller
 {
     public function index(Request $request)
     {
+        $user = $request->user();
         $now = now();
         $events = Event::query()
             ->withCount('registrations')
@@ -30,9 +31,17 @@ class EventController extends Controller
             ->orderByDesc('starts_at')
             ->paginate(10, ['*'], 'announcements_page');
 
+        $userRegisteredEventIds = [];
+        if ($user) {
+            $userRegisteredEventIds = EventRegistration::query()
+                ->where('user_id', $user->id)
+                ->pluck('event_id');
+        }
+
         return Inertia::render('Student/Events/Index', [
             'events' => $events,
             'announcements' => $announcements,
+            'userRegisteredEventIds' => $userRegisteredEventIds,
         ]);
     }
 
