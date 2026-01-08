@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Models\Event;
 use App\Http\Controllers\Admin\DormController;
 use App\Http\Controllers\Staff\ResidentsController;
 use App\Http\Controllers\Admin\DormManageController;
@@ -29,7 +30,15 @@ Route::get('/', function () {
 });
 
 Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
+    $announcements = Event::query()
+        ->where('type', 'announcement')
+        ->orderByDesc('starts_at')
+        ->orderByDesc('created_at')
+        ->get(['id', 'name', 'description', 'starts_at', 'created_at']);
+
+    return Inertia::render('Dashboard', [
+        'announcements' => $announcements,
+    ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {

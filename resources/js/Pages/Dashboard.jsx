@@ -4,6 +4,7 @@ import { Head, usePage, Link } from '@inertiajs/react';
 export default function Dashboard() {
     const { props } = usePage();
     const notifications = props.notifications || { unread: 0, latest: [] };
+    const announcements = props.announcements || [];
     return (
         <AuthenticatedLayout
             header={
@@ -16,22 +17,51 @@ export default function Dashboard() {
 
             <div className="py-12">
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
-                    <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-                        <div className="p-6 text-gray-900 space-y-6">
-                            <div>You're logged in!</div>
-                            <div>
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                        <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                            <div className="p-6 text-gray-900 space-y-6">
+                                <div>You're logged in!</div>
+                                <div>
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="font-semibold">Notifications</h3>
+                                        <span className="text-sm text-gray-600">Unread: {notifications.unread}</span>
+                                    </div>
+                                    <div className="mt-3 divide-y">
+                                        {(notifications.latest || []).map((n) => (
+                                            <div key={n.id} className="py-2 text-sm">
+                                                <div className="font-medium">{titleFor(n)}</div>
+                                                <div className="text-gray-600">{detailFor(n)}</div>
+                                            </div>
+                                        ))}
+                                        {(notifications.latest || []).length === 0 && (
+                                            <p className="text-sm text-gray-600">No notifications yet.</p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
+                            <div className="p-6 text-gray-900">
                                 <div className="flex items-center justify-between">
-                                    <h3 className="font-semibold">Notifications</h3>
-                                    <span className="text-sm text-gray-600">Unread: {notifications.unread}</span>
+                                    <h3 className="font-semibold">Announcements</h3>
+                                    <span className="text-sm text-gray-600">Total: {announcements.length}</span>
                                 </div>
                                 <div className="mt-3 divide-y">
-                                    {(notifications.latest || []).map((n) => (
-                                        <div key={n.id} className="py-2 text-sm">
-                                            <div className="font-medium">{titleFor(n)}</div>
-                                            <div className="text-gray-600">{detailFor(n)}</div>
+                                    {announcements.map((a) => (
+                                        <div key={a.id} className="py-3 text-sm">
+                                            <div className="font-medium">{a.name}</div>
+                                            {a.description && (
+                                                <div className="mt-1 text-gray-700">{a.description}</div>
+                                            )}
+                                            <div className="mt-1 text-xs text-gray-500">
+                                                {formatDate(a.starts_at || a.created_at)}
+                                            </div>
                                         </div>
                                     ))}
-                                    {(notifications.latest || []).length === 0 && <p className="text-sm text-gray-600">No notifications yet.</p>}
+                                    {announcements.length === 0 && (
+                                        <p className="text-sm text-gray-600">No announcements yet.</p>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -60,4 +90,14 @@ function detailFor(n) {
     if (n.type === 'fine_appeal_submitted') return `ID ${d.fine_code} • Appeal pending`;
     if (n.type === 'fine_appeal_decided') return `ID ${d.fine_code} • ${d.status}`;
     return '';
+}
+
+function formatDate(value) {
+    if (!value) return '';
+    try {
+        const d = new Date(value);
+        return d.toLocaleString();
+    } catch (e) {
+        return String(value);
+    }
 }
