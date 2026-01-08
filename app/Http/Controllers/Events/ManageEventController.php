@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Events;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\EventMedia;
+use App\Models\Staff;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -25,8 +26,18 @@ class ManageEventController extends Controller
             ->orderByDesc('starts_at')
             ->paginate(10);
 
+        $staffDorm = null;
+        if ($request->user()) {
+            $staff = Staff::active()->where('user_id', $request->user()->id)->with('dorm')->first();
+            if ($staff) {
+                $staffDorm = $staff->dorm ?: null;
+            }
+        }
+
         return Inertia::render('Staff/Events/Index', [
             'events' => $events,
+            'staffDorm' => $staffDorm,
+            'staffDormId' => $staffDorm ? $staffDorm->id : null,
         ]);
     }
 
@@ -51,9 +62,14 @@ class ManageEventController extends Controller
             'images.*' => ['nullable','image','max:5120'],
         ]);
 
-        // If closed visibility, ensure dorm_id provided
+        // If closed visibility, ensure dorm_id provided; fallback to staff dorm
         if ($validated['visibility'] === 'closed' && empty($validated['dorm_id'])) {
-            return back()->withErrors(['dorm_id' => 'Dorm is required for closed visibility']);
+            $staff = Staff::active()->where('user_id', $request->user()->id)->first();
+            if ($staff && $staff->dorm_id) {
+                $validated['dorm_id'] = $staff->dorm_id;
+            } else {
+                return back()->withErrors(['dorm_id' => 'Dorm is required for closed visibility']);
+            }
         }
 
         $event = Event::create([
@@ -82,7 +98,7 @@ class ManageEventController extends Controller
             }
         }
 
-        return redirect()->route('staff.events.show', $event);
+        return redirect()->route('staff.events.show', $event)->with('success', 'Event updated');
     }
 
     public function show(Request $request, Event $event)
@@ -97,6 +113,36 @@ class ManageEventController extends Controller
     public function update(Request $request, Event $event)
     {
         $this->ensureOwner($request, $event);
+        // Use existing event values when inputs are empty, so saving without changes works
+        $data = $request->all();
+        if (!filled($data['name'] ?? null)) {
+            $data['name'] = $event->name;
+        }
+        if (!filled($data['starts_at'] ?? null)) {
+            $data['starts_at'] = $event->starts_at ? $event->starts_at->toDateTimeString() : null;
+        }
+        if (!filled($data['ends_at'] ?? null)) {
+            $data['ends_at'] = $event->ends_at ? $event->ends_at->toDateTimeString() : null;
+        }
+        if (!filled($data['visibility'] ?? null)) {
+            $data['visibility'] = $event->visibility;
+        }
+        if (!filled($data['type'] ?? null)) {
+            $data['type'] = $event->type;
+        }
+        if (!filled($data['registration_opens_at'] ?? null)) {
+            $data['registration_opens_at'] = $event->registration_opens_at ? $event->registration_opens_at->toDateTimeString() : null;
+        }
+        if (!filled($data['registration_closes_at'] ?? null)) {
+            $data['registration_closes_at'] = $event->registration_closes_at ? $event->registration_closes_at->toDateTimeString() : null;
+        }
+        if (!filled($data['capacity'] ?? null)) {
+            $data['capacity'] = $event->capacity;
+        }
+        if (!filled($data['dorm_id'] ?? null)) {
+            $data['dorm_id'] = $event->dorm_id;
+        }
+        $request->merge($data);
         $validated = $request->validate([
             'name' => ['required','string','max:255'],
             'description' => ['nullable','string'],
@@ -108,13 +154,30 @@ class ManageEventController extends Controller
             'registration_closes_at' => ['nullable','date','after:registration_opens_at'],
             'capacity' => ['nullable','integer','min:1'],
             'dorm_id' => ['nullable','exists:dorms,id'],
+            'images.*' => ['nullable','image','max:5120'],
         ]);
 
         if ($validated['visibility'] === 'closed' && empty($validated['dorm_id'])) {
-            return back()->withErrors(['dorm_id' => 'Dorm is required for closed visibility']);
+            $staff = \App\Models\Staff::active()->where('user_id', $request->user()->id)->first();
+            if ($staff && $staff->dorm_id) {
+                $validated['dorm_id'] = $staff->dorm_id;
+            } else {
+                return back()->withErrors(['dorm_id' => 'Dorm is required for closed visibility']);
+            }
         }
 
         $event->update($validated);
+
+        if (!empty($request->file('images'))) {
+            foreach ($request->file('images') as $image) {
+                $path = $image->store('events/'.$event->id, 'public');
+                EventMedia::create([
+                    'event_id' => $event->id,
+                    'path' => $path,
+                    'original_name' => $image->getClientOriginalName(),
+                ]);
+            }
+        }
 
         if (($validated['type'] ?? $event->type) === 'announcement') {
             $event->attendance_password_hash = null;

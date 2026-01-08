@@ -102,7 +102,31 @@ export default function AuthenticatedLayout({ header, children }) {
                                                 </div>
                                             );
                                         })()}
-                                        <NavLink href={route('staff.visitors.index')} active={route().current('staff.visitors.index')}>Visitors</NavLink>
+                                        {(() => {
+                                            const visitorsActive = route().current('staff.visitors.index');
+                                            const base = 'inline-flex items-center border-b-2 px-1 pt-1 text-sm font-medium leading-5 transition duration-150 ease-in-out focus:outline-none';
+                                            const active = visitorsActive
+                                                ? ' border-violet-400 text-violet-900 focus:border-violet-700'
+                                                : ' border-transparent text-gray-500 hover:border-violet-300 hover:text-violet-700 focus:border-violet-500 focus:text-violet-900';
+                                            return (
+                                                <div className={base + active}>
+                                                    <Dropdown>
+                                                        <Dropdown.Trigger>
+                                                            <button type="button" className="inline-flex items-center text-sm font-medium leading-5 text-inherit focus:outline-none h-16 cursor-pointer">
+                                                                Visitors
+                                                                <svg className="-me-0.5 ms-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                                                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                                                                </svg>
+                                                            </button>
+                                                        </Dropdown.Trigger>
+                                                        <Dropdown.Content>
+                                                            <Dropdown.Link href={route('staff.visitors.index', { tab: 'list' })}>Visitor Lists</Dropdown.Link>
+                                                            <Dropdown.Link href={route('staff.visitors.index', { tab: 'add' })}>Add Visitor</Dropdown.Link>
+                                                        </Dropdown.Content>
+                                                    </Dropdown>
+                                                </div>
+                                            );
+                                        })()}
                                         <NavLink href={route('staff.events.index')} active={route().current('staff.events.index')}>Events</NavLink>
                                         <NavLink href={route('staff.jakmas.index')} active={route().current('staff.jakmas.index')}>JAKMAS</NavLink>
 
@@ -288,7 +312,9 @@ export default function AuthenticatedLayout({ header, children }) {
                                 <div className="px-4 pt-2 font-semibold text-xs text-violet-600 uppercase">Fines</div>
                                 <ResponsiveNavLink href={route('staff.fines.index', { tab: 'list' })} active={route().current('staff.fines.index')}>Fine List</ResponsiveNavLink>
                                 <ResponsiveNavLink href={route('staff.fineAppeals.index')} active={route().current('staff.fineAppeals.index')}>Fine Appeals</ResponsiveNavLink>
-                                <ResponsiveNavLink href={route('staff.visitors.index')} active={route().current('staff.visitors.index')}>Visitors</ResponsiveNavLink>
+                                <div className="px-4 pt-2 font-semibold text-xs text-violet-600 uppercase">Visitors</div>
+                                <ResponsiveNavLink href={route('staff.visitors.index', { tab: 'list' })} active={route().current('staff.visitors.index')}>Visitor Lists</ResponsiveNavLink>
+                                <ResponsiveNavLink href={route('staff.visitors.index', { tab: 'add' })} active={route().current('staff.visitors.index')}>Add Visitor</ResponsiveNavLink>
                                 <ResponsiveNavLink href={route('staff.events.index')} active={route().current('staff.events.index')}>Events</ResponsiveNavLink>
                                 <div className="px-4 pt-2 font-semibold text-xs text-violet-600 uppercase">Inventory</div>
                                 <ResponsiveNavLink href={route('staff.inventory.items.index')} active={route().current('staff.inventory.items.index')}>Items</ResponsiveNavLink>
