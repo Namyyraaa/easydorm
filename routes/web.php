@@ -34,6 +34,14 @@ Route::get('/dashboard', function (\Illuminate\Http\Request $request) {
     if ($user && method_exists($user, 'isStaff') && $user->isStaff()) {
         return redirect()->route('staff.dashboard');
     }
+    // Redirect authenticated students to their dashboard
+    if ($user
+        && method_exists($user, 'isSuperAdmin') && !$user->isSuperAdmin()
+        && method_exists($user, 'isStaff') && !$user->isStaff()
+        && method_exists($user, 'isJakmas') && !$user->isJakmas()
+    ) {
+        return redirect()->route('student.dashboard');
+    }
     $announcements = Event::query()
         ->where('type', 'announcement')
         ->orderByDesc('starts_at')
@@ -54,6 +62,8 @@ Route::middleware('auth')->group(function () {
 
 // Student maintenance routes (auth + verified + student-only)
 Route::middleware(['auth','verified','student'])->prefix('student')->name('student.')->group(function() {
+    // Dashboard
+    Route::get('/dashboard', [\App\Http\Controllers\Student\DashboardController::class, 'index'])->name('dashboard');
     // Fines
     Route::get('/fines', [StudentFineController::class, 'index'])->name('fines.index');
     Route::get('/fines/{fine}', [StudentFineController::class, 'show'])->name('fines.show');

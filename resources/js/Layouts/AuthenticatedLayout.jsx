@@ -42,8 +42,8 @@ export default function AuthenticatedLayout({ header, children }) {
 
                             <div className="hidden space-x-6 sm:-my-px sm:ms-10 sm:flex">
                                 <NavLink
-                                    href={isStaff ? route('staff.dashboard') : route('dashboard')}
-                                    active={route().current('dashboard') || route().current('staff.dashboard')}
+                                    href={isStaff ? route('staff.dashboard') : (isStudent ? route('student.dashboard') : route('dashboard'))}
+                                    active={route().current('dashboard') || route().current('staff.dashboard') || route().current('student.dashboard')}
                                 >
                                     Dashboard
                                 </NavLink>
@@ -211,7 +211,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                                 type="button"
                                                 className="inline-flex items-center rounded-md border border-transparent bg-white px-3 py-2 text-sm font-medium leading-4 text-violet-700 transition duration-150 ease-in-out hover:text-violet-900 focus:outline-none"
                                             >
-                                                <span className="max-w-[160px] overflow-hidden text-ellipsis whitespace-nowrap">{displayName}</span>
+                                                <span className="max-w-40 overflow-hidden text-ellipsis whitespace-nowrap">{displayName}</span>
 
                                                 <svg
                                                     className="-me-0.5 ms-2 h-4 w-4"
@@ -294,8 +294,8 @@ export default function AuthenticatedLayout({ header, children }) {
                 >
                     <div className="space-y-1 pb-3 pt-2">
                         <ResponsiveNavLink
-                            href={isStaff ? route('staff.dashboard') : route('dashboard')}
-                            active={route().current('dashboard') || route().current('staff.dashboard')}
+                            href={isStaff ? route('staff.dashboard') : (isStudent ? route('student.dashboard') : route('dashboard'))}
+                            active={route().current('dashboard') || route().current('staff.dashboard') || route().current('student.dashboard')}
                         >
                             Dashboard
                         </ResponsiveNavLink>

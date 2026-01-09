@@ -5,6 +5,8 @@ import React, { useEffect, useState } from 'react';
 export default function ComplaintsIndex() {
   const { props } = usePage();
   const items = props.items || [];
+  const statusParam = (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('status')) || '';
+  const filteredItems = statusParam ? items.filter((it) => it.status === statusParam) : items;
   const flash = props.flash || {};
 
   const form = useForm({ title: '', description: '', is_anonymous: false, images: [] });
@@ -106,7 +108,7 @@ export default function ComplaintsIndex() {
                   </tr>
                 </thead>
                 <tbody>
-                  {items.map((it) => (
+                  {filteredItems.map((it) => (
                     <tr key={it.id} className="border-t">
                       <td className="py-2">{it.title}</td>
                       <td>{it.created_at ? new Date(it.created_at).toLocaleDateString() : ''}</td>
@@ -116,7 +118,7 @@ export default function ComplaintsIndex() {
                       </td>
                     </tr>
                   ))}
-                  {items.length === 0 && (
+                  {filteredItems.length === 0 && (
                     <tr>
                       <td colSpan="4" className="py-3 text-gray-600">No complaints yet.</td>
                     </tr>

@@ -65,7 +65,9 @@ export default function MaintenanceIndex() {
   // Combine own + roommate requests and build filters/pagination
   const allItems = useMemo(() => [...items, ...roommateItems], [items, roommateItems]);
   const statuses = useMemo(() => ['all', ...Array.from(new Set(allItems.map((it) => it.status).filter(Boolean)))], [allItems]);
-  const [statusFilter, setStatusFilter] = useState('all');
+  // Initialize from URL ?status to support dashboard click-through
+  const initialStatus = (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('status')) || 'all';
+  const [statusFilter, setStatusFilter] = useState(initialStatus);
   const [mineOnly, setMineOnly] = useState(false);
 
   const submittedBy = (it) => {
