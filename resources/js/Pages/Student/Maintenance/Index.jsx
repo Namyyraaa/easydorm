@@ -7,6 +7,7 @@ export default function MaintenanceIndex() {
   const items = props.requests || [];
   const roommateItems = props.roommateRequests || [];
   const flash = props.flash || {};
+  const userId = props?.auth?.user?.id;
 
   const form = useForm({ title: '', description: '', images: [] });
   const [previews, setPreviews] = useState([]);
@@ -61,6 +62,38 @@ export default function MaintenanceIndex() {
     });
   };
 
+  // Combine own + roommate requests and build filters/pagination
+  const allItems = useMemo(() => [...items, ...roommateItems], [items, roommateItems]);
+  const statuses = useMemo(() => ['all', ...Array.from(new Set(allItems.map((it) => it.status).filter(Boolean)))], [allItems]);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [mineOnly, setMineOnly] = useState(false);
+
+  const submittedBy = (it) => {
+    const name = it?.student?.name;
+    if (name && typeof name === 'string') {
+      const parts = name.trim().split(/\s+/).filter(Boolean);
+      return parts.slice(0, 2).join(' ');
+    }
+    if (String(it.student_id) === String(userId)) return 'You';
+    return '-';
+  };
+
+  const filtered = useMemo(() => {
+    return allItems.filter((it) => (
+      (statusFilter === 'all' || it.status === statusFilter)
+      && (!mineOnly || String(it.student_id) === String(userId))
+    ));
+  }, [allItems, statusFilter, mineOnly, userId]);
+
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const start = (page - 1) * pageSize;
+  const end = start + pageSize;
+  const displayItems = useMemo(() => filtered.slice(start, end), [filtered, start, end]);
+
+  useEffect(() => { setPage(1); }, [statusFilter, mineOnly]);
+
   return (
     <AuthenticatedLayout header={<h2 className="text-xl font-semibold leading-tight text-gray-800">Maintenance Requests</h2>}>
       <Head title="Maintenance" />
@@ -87,7 +120,7 @@ export default function MaintenanceIndex() {
                 onClick={() => setActiveTab('list')}
                 className={`whitespace-nowrap border-b-2 px-1 pb-2 text-sm font-medium flex-1 text-center order-1 ${activeTab === 'list' ? 'border-violet-500 text-violet-800' : 'border-transparent text-gray-500 hover:text-violet-700 hover:border-violet-300'}`}
               >
-                My Requests
+                Submitted Requests
               </button>
             </nav>
           </div>
@@ -95,51 +128,72 @@ export default function MaintenanceIndex() {
           {/* Tabs content */}
           {activeTab === 'list' && (
             <div className="bg-white shadow sm:rounded-lg p-6">
-              <h3 className="font-semibold mb-3">My Requests</h3>
+              <h3 className="font-semibold mb-3">Submitted Requests</h3>
+              {/* Filters */}
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex gap-3">
+                  <div className="flex items-center">
+                    <label className="text-sm text-gray-600">Status</label>
+                    <select
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                      className="ml-2 rounded border-gray-300 text-sm focus:outline-none transition-shadow hover:ring-2 hover:ring-purple-300 hover:ring-offset-1 focus:ring-2 focus:ring-purple-700 focus:ring-offset-1"
+                    >
+                      {statuses.map((s) => (
+                        <option key={s} value={s}>{s === 'all' ? 'All' : s}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex items-center">
+                    <input id="mineOnly" type="checkbox" checked={mineOnly} onChange={(e) => setMineOnly(e.target.checked)} />
+                    <label htmlFor="mineOnly" className="ml-2 text-sm text-gray-600">Mine only</label>
+                  </div>
+                </div>
+                <button onClick={() => { setStatusFilter('all'); setMineOnly(false); }} className="text-sm text-gray-600 hover:underline">Reset</button>
+              </div>
+
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-gray-600">
-                    <th className="py-2 text-left">Title</th>
+                    <th className="py-2 text-left w-2/5">Title</th>
+                    <th className="text-left">Submitted By</th>
                     <th className="text-left">Date</th>
                     <th className="text-left">Status</th>
-                    <th className="text-left"></th>
+                    <th className="text-left w-28">Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {items.map((it) => (
+                  {displayItems.map((it) => (
                     <tr key={it.id} className="border-t">
-                      <td className="py-2">{it.title}</td>
+                      <td className="py-2 w-2/5"><span className="block max-w-[24rem] truncate">{it.title}</span></td>
+                      <td>{submittedBy(it)}</td>
                       <td>{it.created_at ? new Date(it.created_at).toLocaleDateString() : ''}</td>
                       <td><span className={`uppercase text-xs px-2 py-0.5 rounded ${badgeClassForStatus(it.status)}`}>{it.status}</span></td>
-                      <td>
+                      <td className="w-28">
                         <Link href={route('student.maintenance.show', it.id)} className="inline-flex items-center px-3 py-1 rounded bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-1">View</Link>
                       </td>
                     </tr>
                   ))}
-                  {items.length === 0 && (
+                  {displayItems.length === 0 && (
                     <tr>
-                      <td colSpan="4" className="py-3 text-gray-600">No maintenance requests yet.</td>
+                      <td colSpan="5" className="py-3 text-gray-600">No maintenance requests yet.</td>
                     </tr>
                   )}
                 </tbody>
               </table>
 
-              {/* Roommate-visible requests (read-only) */}
-              <div className="mt-6">
-                <h3 className="font-semibold mb-3">Requests from Roommates (read-only)</h3>
-                  <div className="divide-y">
-                    {roommateItems.map((it) => (
-                      <div key={it.id} className="py-3 flex items-center justify-between">
-                        <div>
-                          <div className="font-medium">{it.title}</div>
-                          <div className="text-sm text-gray-600">{new Date(it.created_at).toLocaleString()} — <span className={`uppercase text-xs px-2 py-0.5 rounded ${badgeClassForStatus(it.status)}`}>{it.status}</span></div>
-                        </div>
-                        <Link href={route('student.maintenance.show', it.id)} className="inline-flex items-center px-3 py-1 rounded bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-1">View</Link>
-                      </div>
+              {filtered.length > 0 && (
+                <div className="mt-4 flex items-center justify-between">
+                  <div className="text-sm text-gray-600">Showing {start + 1} - {Math.min(end, filtered.length)} of {filtered.length}</div>
+                  <div className="flex items-center gap-1">
+                    <button disabled={page === 1} onClick={() => setPage((p) => Math.max(1, p - 1))} className="px-2 py-1 rounded border text-sm disabled:opacity-50">Prev</button>
+                    {Array.from({ length: totalPages }).map((_, i) => (
+                      <button key={i} onClick={() => setPage(i + 1)} className={`px-2 py-1 rounded border text-sm ${page === i + 1 ? 'bg-indigo-600 text-white border-indigo-600' : ''}`}>{i + 1}</button>
                     ))}
-                  {roommateItems.length === 0 && <p className="text-sm text-gray-600">No roommate requests visible.</p>}
+                    <button disabled={page === totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))} className="px-2 py-1 rounded border text-sm disabled:opacity-50">Next</button>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
 

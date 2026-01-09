@@ -15,24 +15,40 @@ use Inertia\Response;
 
 class MaintenanceRequestController extends Controller
 {
+    protected function firstTwoWords(?string $name): ?string
+    {
+        if (!$name) return null;
+        $trim = trim($name);
+        if ($trim === '') return null;
+        $parts = preg_split('/\s+/', $trim);
+        if (!$parts || count($parts) === 0) return null;
+        return implode(' ', array_slice($parts, 0, min(2, count($parts))));
+    }
+
     public function index(Request $request): Response
     {
         $user = $request->user();
-        $requests = MaintenanceRequest::where('student_id', $user->id)
-            ->latest()
-            ->withCount('media')
-            ->get(['id','title','status','created_at']);
-        // Also include roommate-visible requests: requests in the same room created during
-        // this student's active assignment window, but not created by the student themself.
+        $requests = [];
         $roommateRequests = [];
+
+        // Only show requests when the student is an active resident
         $assignment = ResidentAssignment::active()->where('student_id', $user->id)->first();
         if ($assignment) {
+            // Own requests
+            $requests = MaintenanceRequest::where('student_id', $user->id)
+                ->latest()
+                ->withCount('media')
+                ->with(['student:id,name'])
+                ->get(['id','student_id','room_id','title','status','created_at']);
+
+            // Roommate-visible requests (same room, not created by user)
             $query = MaintenanceRequest::where('room_id', $assignment->room_id)
                 ->where('student_id', '!=', $user->id)
                 ->latest()
-                ->withCount('media');
+                ->withCount('media')
+                ->with(['student:id,name']);
 
-            // respect check_in/check_out if present on the assignment
+            // Limit visibility to requests created during the user's current active assignment window
             if ($assignment->check_in_date) {
                 $query = $query->where('created_at', '>=', $assignment->check_in_date);
             }
@@ -40,7 +56,7 @@ class MaintenanceRequestController extends Controller
                 $query = $query->where('created_at', '<=', $assignment->check_out_date);
             }
 
-            $roommateRequests = $query->get(['id','title','status','created_at']);
+            $roommateRequests = $query->get(['id','student_id','room_id','title','status','created_at']);
         }
 
         return Inertia::render('Student/Maintenance/Index', [
@@ -97,9 +113,22 @@ class MaintenanceRequestController extends Controller
         $user = $request->user();
         // Owner always allowed
         if ($maintenanceRequest->student_id === $user->id) {
-            $maintenanceRequest->load('media');
+            $maintenanceRequest->load([
+                'media',
+                'student:id,name',
+                'reviewedBy:id,name',
+                'inProgressBy:id,name',
+                'completedBy:id,name',
+            ]);
+            $actors = [
+                'submitted' => $this->firstTwoWords(optional($maintenanceRequest->student)->name),
+                'reviewed' => $this->firstTwoWords(optional($maintenanceRequest->reviewedBy)->name),
+                'in_progress' => $this->firstTwoWords(optional($maintenanceRequest->inProgressBy)->name),
+                'completed' => $this->firstTwoWords(optional($maintenanceRequest->completedBy)->name),
+            ];
             return Inertia::render('Student/Maintenance/Show', [
                 'requestItem' => $maintenanceRequest,
+                'actors' => $actors,
             ]);
         }
 
@@ -116,16 +145,42 @@ class MaintenanceRequestController extends Controller
             ->first();
 
         if ($assignment) {
-            $maintenanceRequest->load('media');
+            $maintenanceRequest->load([
+                'media',
+                'student:id,name',
+                'reviewedBy:id,name',
+                'inProgressBy:id,name',
+                'completedBy:id,name',
+            ]);
+            $actors = [
+                'submitted' => $this->firstTwoWords(optional($maintenanceRequest->student)->name),
+                'reviewed' => $this->firstTwoWords(optional($maintenanceRequest->reviewedBy)->name),
+                'in_progress' => $this->firstTwoWords(optional($maintenanceRequest->inProgressBy)->name),
+                'completed' => $this->firstTwoWords(optional($maintenanceRequest->completedBy)->name),
+            ];
             return Inertia::render('Student/Maintenance/Show', [
                 'requestItem' => $maintenanceRequest,
+                'actors' => $actors,
             ]);
         }
 
         $this->authorizeOwnership($request, $maintenanceRequest);
-        $maintenanceRequest->load('media');
+        $maintenanceRequest->load([
+            'media',
+            'student:id,name',
+            'reviewedBy:id,name',
+            'inProgressBy:id,name',
+            'completedBy:id,name',
+        ]);
+        $actors = [
+            'submitted' => $this->firstTwoWords(optional($maintenanceRequest->student)->name),
+            'reviewed' => $this->firstTwoWords(optional($maintenanceRequest->reviewedBy)->name),
+            'in_progress' => $this->firstTwoWords(optional($maintenanceRequest->inProgressBy)->name),
+            'completed' => $this->firstTwoWords(optional($maintenanceRequest->completedBy)->name),
+        ];
         return Inertia::render('Student/Maintenance/Show', [
             'requestItem' => $maintenanceRequest,
+            'actors' => $actors,
         ]);
     }
 

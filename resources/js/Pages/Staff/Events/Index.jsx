@@ -15,6 +15,7 @@ export default function StaffEventsIndex() {
 
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
+  const [mineOnly, setMineOnly] = useState(false);
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
@@ -45,12 +46,20 @@ export default function StaffEventsIndex() {
     return items.filter(e => (
       (statusFilter === 'all' || e.visibility === statusFilter)
       && (typeFilter === 'all' || e.type === typeFilter)
+      && (!mineOnly || String(e.created_by) === String(userId))
     ));
-  }, [items, statusFilter, typeFilter]);
+  }, [items, statusFilter, typeFilter, mineOnly, userId]);
+  const fmtStarts = (dt) => {
+    if (!dt) return '-';
+    const d = new Date(dt);
+    const date = d.toLocaleDateString();
+    const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return { date, time };
+  };
 
   useEffect(() => {
     setPage(1);
-  }, [statusFilter, typeFilter]);
+  }, [statusFilter, typeFilter, mineOnly]);
 
   // Persist active tab to URL so back/refresh keeps the same tab
   useEffect(() => {
@@ -164,8 +173,12 @@ export default function StaffEventsIndex() {
                       ))}
                     </select>
                   </div>
+                  <label className="inline-flex items-center text-sm text-gray-700">
+                    <input type="checkbox" className="mr-2 rounded border-gray-300" checked={mineOnly} onChange={e=>setMineOnly(e.target.checked)} />
+                    Mine only
+                  </label>
                 </div>
-                <button onClick={() => { setStatusFilter('all'); setTypeFilter('all'); }} className="text-sm text-gray-600 hover:underline">Reset</button>
+                <button onClick={() => { setStatusFilter('all'); setTypeFilter('all'); setMineOnly(false); }} className="text-sm text-gray-600 hover:underline">Reset</button>
               </div>
               <table className="w-full text-sm">
                 <thead>
@@ -175,7 +188,7 @@ export default function StaffEventsIndex() {
                     <th className="text-left">Capacity</th>
                     <th className="text-left">Starts</th>
                     <th className="text-left">Visibility</th>
-                    <th className="text-left">Created</th>
+                    <th className="text-left">Created By</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -183,21 +196,28 @@ export default function StaffEventsIndex() {
                   {displayItems.map(e => (
                     <tr key={e.id} className="border-t">
                       <td className="py-2">{e.name}</td>
-                      <td>{e.type}</td>
+                      <td>{humanize(e.type)}</td>
                       <td>{e.capacity != null ? e.capacity : 'N/A'}</td>
-                      <td>{e.starts_at ? new Date(e.starts_at).toLocaleString() : '-'}</td>
-                      <td><span className={`uppercase text-xs px-2 py-0.5 rounded ${badgeClassFor(e.visibility)} transition-shadow hover:ring-2 hover:ring-purple-300 hover:ring-offset-1`}>{(e.visibility || '').replace(/_/g, ' ')}</span></td>
-                      <td>{e.created_at ? new Date(e.created_at).toLocaleString() : ''}</td>
                       <td>
-                        {String(e.created_by) === String(userId) ? (
-                          <Link href={route('staff.events.show', e.id)} className="inline-flex items-center px-3 py-1 rounded bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-1">
-                            View
-                          </Link>
-                        ) : (
-                          <button className="inline-flex items-center px-3 py-1 rounded bg-gray-200 text-gray-500 cursor-not-allowed" disabled>
-                            View
-                          </button>
-                        )}
+                        {(() => {
+                          const st = fmtStarts(e.starts_at);
+                          if (st === '-') return '-';
+                          return (
+                            <div className="leading-tight">
+                              <div>{st.date}</div>
+                              <div className="text-xs text-gray-600">{st.time}</div>
+                            </div>
+                          );
+                        })()}
+                      </td>
+                      <td><span className={`uppercase text-xs px-2 py-0.5 rounded ${badgeClassFor(e.visibility)} transition-shadow hover:ring-2 hover:ring-purple-300 hover:ring-offset-1`}>{(e.visibility || '').replace(/_/g, ' ')}</span></td>
+                      <td className="max-w-40">
+                        <span className="inline-block truncate align-middle" title={e.creator?.name || ''}>{e.creator?.name || '-'}</span>
+                      </td>
+                      <td>
+                        <Link href={route('staff.events.show', e.id)} className="inline-flex items-center px-3 py-1 rounded bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-2 focus:ring-indigo-400 focus:outline-none focus:ring-offset-1">
+                          View
+                        </Link>
                       </td>
                     </tr>
                   ))}

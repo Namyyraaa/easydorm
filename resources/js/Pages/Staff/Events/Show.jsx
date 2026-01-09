@@ -121,14 +121,14 @@ export default function Show({ event }) {
             <div className="flex items-center gap-3 mb-4">
               <h3 className="font-semibold">Event Details</h3>
               <div className="ml-auto flex gap-2">
-                {!editing ? (
-                  <button className="inline-flex items-center px-3 py-1 rounded bg-indigo-600 text-white disabled:opacity-50" onClick={() => setEditing(true)} disabled={!canEdit}>Edit</button>
+                {canEdit && (!editing ? (
+                  <button className="inline-flex items-center px-3 py-1 rounded bg-indigo-600 text-white" onClick={() => setEditing(true)}>Edit</button>
                 ) : (
                   <>
                     <button type="button" className="inline-flex items-center px-3 py-1 rounded border" onClick={() => { resetForm(); setEditing(false); }}>Cancel</button>
                     <button type="submit" form="event-edit-form" className="inline-flex items-center px-3 py-1 rounded bg-violet-600 text-white disabled:opacity-50" disabled={eventForm.processing}>Save</button>
                   </>
-                )}
+                ))}
               </div>
             </div>
 
@@ -141,7 +141,11 @@ export default function Show({ event }) {
 
               <div>
                 <label className="block text-sm font-medium text-violet-800">Description</label>
-                <textarea rows={4} className="mt-1 w-full rounded border border-violet-200 p-2 focus:border-violet-500 focus:ring-violet-500 disabled:bg-gray-100" value={eventForm.data.description} onChange={e=>eventForm.setData('description', e.target.value)} disabled={!editing} />
+                {editing ? (
+                  <textarea rows={4} className="mt-1 w-full rounded border border-violet-200 p-2 focus:border-violet-500 focus:ring-violet-500" value={eventForm.data.description} onChange={e=>eventForm.setData('description', e.target.value)} />
+                ) : (
+                  <div className="mt-1 w-full rounded border border-violet-200 p-2 bg-gray-50 whitespace-pre-wrap text-sm text-gray-700">{event.description || ''}</div>
+                )}
                 {eventForm.errors.description && <p className="text-sm text-red-600">{eventForm.errors.description}</p>}
               </div>
 
@@ -200,12 +204,12 @@ export default function Show({ event }) {
             </form>
           </div>
 
-          {eventForm.data.type === 'event' && (
+          {eventForm.data.type === 'event' && canEdit && (
             <div className="bg-white shadow sm:rounded-lg p-6 mt-6">
               <h3 className="font-semibold mb-3">Attendance Password</h3>
               <form onSubmit={setPassword} className="flex gap-2">
-                <input className="h-10 w-full rounded border border-violet-200 p-2 focus:border-violet-500 focus:ring-violet-500 disabled:bg-gray-100" value={passwordForm.data.attendance_password} onChange={e=>passwordForm.setData('attendance_password', e.target.value)} disabled={!canEdit} placeholder={event.attendance_password_hash ? '••••••••' : ''} />
-                <button type="submit" className="inline-flex items-center h-10 px-4 rounded bg-violet-600 text-white disabled:opacity-50" disabled={!canEdit || passwordForm.processing}>Set</button>
+                <input className="h-10 w-full rounded border border-violet-200 p-2 focus:border-violet-500 focus:ring-violet-500" value={passwordForm.data.attendance_password} onChange={e=>passwordForm.setData('attendance_password', e.target.value)} placeholder={event.attendance_password_hash ? '••••••••' : ''} />
+                <button type="submit" className="inline-flex items-center h-10 px-4 rounded bg-violet-600 text-white disabled:opacity-50" disabled={passwordForm.processing}>Set</button>
               </form>
             </div>
           )}

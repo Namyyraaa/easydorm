@@ -1,5 +1,5 @@
 import React from 'react';
-import { useForm } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
 export default function Show({ event, isRegistered, isRegistrationOpen }) {
@@ -84,6 +84,7 @@ export default function Show({ event, isRegistered, isRegistrationOpen }) {
 
   return (
     <AuthenticatedLayout header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{event.type === 'announcement' ? 'Announcement' : 'Event'}: {event.name}</h2>}>
+      <Head title={`${event.type === 'announcement' ? 'Announcement Detail' : 'Event Detail'}`} />
       <div className="py-12 space-y-6">
         <div className="mx-auto max-w-5xl sm:px-6 lg:px-8">
           {/* Images first */}
@@ -103,11 +104,9 @@ export default function Show({ event, isRegistered, isRegistrationOpen }) {
           {/* Details next */}
           <div className="bg-white shadow sm:rounded-lg p-6 mt-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold">Event Details</h3>
+              <h3 className="font-semibold">{event.type === 'announcement' ? 'Announcement Details' : 'Event Details'}</h3>
               <div className="flex items-center gap-3 ml-auto">
                 <div className="text-sm text-gray-700">{getRegisteredCount()} / {event.capacity ?? '-'}</div>
-                <div className={`text-xs px-3 py-1 rounded ${badgeClassForEventStatus(getEventStatus())} transition-shadow hover:ring-2 hover:ring-purple-300 hover:ring-offset-1`}>Event: {getEventStatus()}</div>
-                <div className={`text-xs px-3 py-1 rounded ${badgeClassForRegStatus(getRegistrationStatus())} transition-shadow hover:ring-2 hover:ring-purple-300 hover:ring-offset-1`}>{getRegistrationStatus()}</div>
               </div>
             </div>
 

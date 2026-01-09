@@ -6,9 +6,11 @@ import MaintenanceStatusTimeline from '@/Components/MaintenanceStatusTimeline';
 export default function MaintenanceShow() {
   const { props } = usePage();
   const item = props.requestItem || {};
+  const actorsFromServer = props.actors || {};
   const flash = props.flash || {};
-
-  const editable = ['submitted','reviewed'].includes(item.status);
+  const userId = props?.auth?.user?.id;
+  const isOwner = String(item.student_id) === String(userId);
+  const editable = isOwner && ['submitted','reviewed'].includes(item.status);
 
   const form = useForm({ title: item.title || '', description: item.description || '', add_images: [] });
   const [previews, setPreviews] = useState([]);
@@ -47,6 +49,13 @@ export default function MaintenanceShow() {
     router.delete(route('student.maintenance.destroy', item.id));
   };
 
+  const firstTwoWords = (name) => {
+    if (!name || typeof name !== 'string') return undefined;
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return undefined;
+    return parts.slice(0, 2).join(' ');
+  };
+
   return (
     <AuthenticatedLayout header={<h2 className="text-xl font-semibold leading-tight text-gray-800">Maintenance Request</h2>}>
       <Head title={`Maintenance #${item.id}`} />
@@ -64,12 +73,21 @@ export default function MaintenanceShow() {
               </div>
               <div className="text-xs uppercase px-3 py-1 rounded bg-gray-200">{item.status}</div>
             </div>
-            <MaintenanceStatusTimeline status={item.status} timestamps={{
-              submitted_at: item.created_at,
-              reviewed_at: item.reviewed_at,
-              in_progress_at: item.in_progress_at,
-              completed_at: item.completed_at,
-            }} />
+            <MaintenanceStatusTimeline
+              status={item.status}
+              timestamps={{
+                submitted_at: item.created_at,
+                reviewed_at: item.reviewed_at,
+                in_progress_at: item.in_progress_at,
+                completed_at: item.completed_at,
+              }}
+              actors={{
+                submitted: actorsFromServer.submitted ?? firstTwoWords(item.student?.name),
+                reviewed: actorsFromServer.reviewed ?? firstTwoWords(item.reviewedBy?.name),
+                in_progress: actorsFromServer.in_progress ?? firstTwoWords(item.inProgressBy?.name),
+                completed: actorsFromServer.completed ?? firstTwoWords(item.completedBy?.name),
+              }}
+            />
             <p className="text-gray-800 whitespace-pre-wrap border-t pt-4">{item.description}</p>
 
             {item.media?.length > 0 && (
@@ -120,7 +138,12 @@ export default function MaintenanceShow() {
               </form>
             </div>
           )}
-          {!editable && (
+          {!isOwner && (
+            <div className="flex items-center gap-3">
+              <Link href={route('student.maintenance.index')} className="px-4 py-2 bg-gray-200 text-gray-800 rounded">Back</Link>
+            </div>
+          )}
+          {isOwner && !editable && (
             <div className="text-sm text-gray-600">Editing disabled after work started.</div>
           )}
         </div>

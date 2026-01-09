@@ -18,22 +18,55 @@ class EventController extends Controller
     {
         $user = $request->user();
         $now = now();
-        $events = Event::query()
+        // Determine student's active dorm
+        $residentDormId = null;
+        if ($user) {
+            $residentDormId = ResidentAssignment::query()
+                ->where('student_id', $user->id)
+                ->active()
+                ->value('dorm_id');
+        }
+
+        $eventsQuery = Event::query()
             ->with(['dorm:id,code,name'])
             ->withCount('registrations')
             ->where('type', 'event')
             ->where(function($q) use ($now) {
                 $q->whereNull('registration_opens_at')->orWhere('registration_opens_at','<=',$now);
-            })
-            ->orderBy('starts_at')
-            ->paginate(10, ['*'], 'events_page');
+            });
 
-        $announcements = Event::query()
+        // Visibility filter: open visible to all; closed only for student's dorm
+        if ($residentDormId) {
+            $eventsQuery->where(function($q) use ($residentDormId) {
+                $q->where('visibility', 'open')
+                  ->orWhere(function($q2) use ($residentDormId) {
+                      $q2->where('visibility', 'closed')->where('dorm_id', $residentDormId);
+                  });
+            });
+        } else {
+            $eventsQuery->where('visibility', 'open');
+        }
+
+        $events = $eventsQuery->orderBy('starts_at')->paginate(10, ['*'], 'events_page');
+
+        $announcementsQuery = Event::query()
             ->with(['dorm:id,code,name'])
             ->withCount('registrations')
             ->where('type', 'announcement')
-            ->orderByDesc('starts_at')
-            ->paginate(10, ['*'], 'announcements_page');
+            ;
+
+        if ($residentDormId) {
+            $announcementsQuery->where(function($q) use ($residentDormId) {
+                $q->where('visibility', 'open')
+                  ->orWhere(function($q2) use ($residentDormId) {
+                      $q2->where('visibility', 'closed')->where('dorm_id', $residentDormId);
+                  });
+            });
+        } else {
+            $announcementsQuery->where('visibility', 'open');
+        }
+
+        $announcements = $announcementsQuery->orderByDesc('starts_at')->paginate(10, ['*'], 'announcements_page');
 
         $userRegisteredEventIds = [];
         if ($user) {
@@ -43,14 +76,8 @@ class EventController extends Controller
         }
 
         $studentDormCode = null;
-        if ($user) {
-            $residentDormId = ResidentAssignment::query()
-                ->where('student_id', $user->id)
-                ->active()
-                ->value('dorm_id');
-            if ($residentDormId) {
-                $studentDormCode = optional(Dorm::query()->select('code')->find($residentDormId))->code;
-            }
+        if ($residentDormId) {
+            $studentDormCode = optional(Dorm::query()->select('code')->find($residentDormId))->code;
         }
 
         return Inertia::render('Student/Events/Index', [
@@ -65,6 +92,16 @@ class EventController extends Controller
     {
         $user = $request->user();
         $now = now();
+        // Enforce dorm restriction for closed visibility events/announcements
+        $residentDormId = ResidentAssignment::query()
+            ->where('student_id', $user->id)
+            ->active()
+            ->value('dorm_id');
+        if ($event->visibility === 'closed') {
+            if (!$residentDormId || (int)$event->dorm_id !== (int)$residentDormId) {
+                abort(403, 'This item is restricted to its dorm.');
+            }
+        }
         $event->load(['media']);
         $event->loadCount('registrations');
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Jakmas;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
 use App\Models\EventMedia;
+use App\Models\Jakmas;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -20,10 +21,23 @@ class EventController extends Controller
     }
     public function index(Request $request)
     {
-        $events = Event::query()
-            ->withCount(['registrations','attendance'])
-            ->orderByDesc('starts_at')
-            ->paginate(10);
+        $eventsQuery = Event::query()
+            ->with(['creator:id,name'])
+            ->withCount(['registrations','attendance']);
+
+        $jakmas = Jakmas::active()->where('user_id', $request->user()->id)->with('dorm')->first();
+        if ($jakmas && $jakmas->dorm) {
+            $eventsQuery->where(function($q) use ($jakmas) {
+                $q->where('visibility', 'open')
+                  ->orWhere(function($q2) use ($jakmas) {
+                      $q2->where('visibility', 'closed')->where('dorm_id', $jakmas->dorm->id);
+                  });
+            });
+        } else {
+            $eventsQuery->where('visibility', 'open');
+        }
+
+        $events = $eventsQuery->orderByDesc('starts_at')->paginate(10);
 
         return Inertia::render('Jakmas/Events/Index', [
             'events' => $events,
@@ -85,7 +99,13 @@ class EventController extends Controller
 
     public function show(Request $request, Event $event)
     {
-        $this->ensureOwner($request, $event);
+        $jakmas = Jakmas::active()->where('user_id', $request->user()->id)->with('dorm')->first();
+        if ($event->visibility === 'closed') {
+            $jakmasDormId = $jakmas && $jakmas->dorm ? $jakmas->dorm->id : null;
+            if (!$jakmasDormId || (int)$event->dorm_id !== (int)$jakmasDormId) {
+                abort(403, 'This event is restricted to its dorm.');
+            }
+        }
         $event->load(['media','registrations.user','attendance.user']);
         return Inertia::render('Jakmas/Events/Show', [
             'event' => $event,

@@ -21,10 +21,9 @@ class ManageEventController extends Controller
     }
     public function index(Request $request)
     {
-        $events = Event::query()
-            ->withCount(['registrations','attendance'])
-            ->orderByDesc('starts_at')
-            ->paginate(10);
+        $eventsQuery = Event::query()
+            ->with(['creator:id,name'])
+            ->withCount(['registrations','attendance']);
 
         $staffDorm = null;
         if ($request->user()) {
@@ -33,6 +32,20 @@ class ManageEventController extends Controller
                 $staffDorm = $staff->dorm ?: null;
             }
         }
+
+        // Restrict closed events to staff's dorm; open events are visible to all
+        if ($staffDorm && $staffDorm->id) {
+            $eventsQuery->where(function($q) use ($staffDorm) {
+                $q->where('visibility', 'open')
+                  ->orWhere(function($q2) use ($staffDorm) {
+                      $q2->where('visibility', 'closed')->where('dorm_id', $staffDorm->id);
+                  });
+            });
+        } else {
+            $eventsQuery->where('visibility', 'open');
+        }
+
+        $events = $eventsQuery->orderByDesc('starts_at')->paginate(10);
 
         return Inertia::render('Staff/Events/Index', [
             'events' => $events,
@@ -103,7 +116,14 @@ class ManageEventController extends Controller
 
     public function show(Request $request, Event $event)
     {
-        $this->ensureOwner($request, $event);
+        // Allow non-creators to view, but restrict closed events to staff's dorm
+        $staff = Staff::active()->where('user_id', $request->user()->id)->with('dorm')->first();
+        if ($event->visibility === 'closed') {
+            $staffDormId = $staff && $staff->dorm ? $staff->dorm->id : null;
+            if (!$staffDormId || (int)$event->dorm_id !== (int)$staffDormId) {
+                abort(403, 'This event is restricted to its dorm.');
+            }
+        }
         $event->load(['media','registrations.user','attendance.user']);
         return Inertia::render('Staff/Events/Show', [
             'event' => $event,
