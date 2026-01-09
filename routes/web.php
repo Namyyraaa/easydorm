@@ -29,7 +29,11 @@ Route::get('/', function () {
     ]);
 });
 
-Route::get('/dashboard', function () {
+Route::get('/dashboard', function (\Illuminate\Http\Request $request) {
+    $user = $request->user();
+    if ($user && method_exists($user, 'isStaff') && $user->isStaff()) {
+        return redirect()->route('staff.dashboard');
+    }
     $announcements = Event::query()
         ->where('type', 'announcement')
         ->orderByDesc('starts_at')
@@ -93,6 +97,8 @@ require __DIR__.'/auth.php';
 
 // Staff routes
 Route::middleware(['auth', 'verified', 'staff'])->prefix('staff')->name('staff.')->group(function () {
+    // Staff dashboard
+    Route::get('/dashboard', [\App\Http\Controllers\Staff\DashboardController::class, 'index'])->name('dashboard');
     // Fines
     Route::get('/fines', [StaffFineController::class, 'index'])->name('fines.index');
     Route::get('/fines/{fine}', [StaffFineController::class, 'show'])->name('fines.show');

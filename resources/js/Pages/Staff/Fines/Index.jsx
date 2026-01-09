@@ -13,7 +13,8 @@ export default function StaffFinesIndex() {
   const [activeTab, setActiveTab] = useState(initialTab === 'list' ? 'list' : 'issue');
 
   // Fines list filters + pagination
-  const [statusFilter, setStatusFilter] = useState('all');
+  const initialStatus = (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('status')) || 'all';
+  const [statusFilter, setStatusFilter] = useState(initialStatus);
   const [blockFilter, setBlockFilter] = useState('all');
   const [roomFilter, setRoomFilter] = useState('all');
   const [searchStudentId, setSearchStudentId] = useState(null);
@@ -71,8 +72,13 @@ export default function StaffFinesIndex() {
   }, [items, blockFilter]);
 
   const filtered = useMemo(() => {
+    const matchesStatus = (r) => {
+      if (statusFilter === 'all') return true;
+      if (statusFilter === 'not_paid') return (r.status === 'unpaid' || r.status === 'pending');
+      return r.status === statusFilter;
+    };
     return items.filter(r => (
-      (statusFilter === 'all' || r.status === statusFilter) &&
+      matchesStatus(r) &&
       (blockFilter === 'all' || r.block?.name === blockFilter) &&
       (roomFilter === 'all' || r.room?.room_number === roomFilter) &&
       (searchStudentId == null || String(r.student?.id) === String(searchStudentId))

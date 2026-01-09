@@ -16,8 +16,15 @@ class FineAppealMedia extends Model
         'fine_appeal_id','type','path','original_filename','mime_type','size_bytes','width','height'
     ];
 
+    protected $appends = ['url'];
+
     public function appeal(): BelongsTo
     {
         return $this->belongsTo(FineAppeal::class, 'fine_appeal_id');
+    }
+
+    public function getUrlAttribute(): string
+    {
+        return '/storage/'.$this->path;
     }
 }

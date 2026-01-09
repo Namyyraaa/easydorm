@@ -8,7 +8,8 @@ export default function StaffMaintenanceIndex() {
   const items = Array.isArray(raw) ? raw : (raw?.data || []);
   const flash = props.flash || {};
 
-  const [statusFilter, setStatusFilter] = useState('all');
+  const initialStatus = (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('status')) || 'all';
+  const [statusFilter, setStatusFilter] = useState(initialStatus);
   const [blockFilter, setBlockFilter] = useState('all');
   const [page, setPage] = useState(1);
   const pageSize = 10;

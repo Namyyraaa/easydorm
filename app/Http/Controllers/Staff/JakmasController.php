@@ -13,13 +13,22 @@ class JakmasController extends Controller
 {
     public function index(Request $request)
     {
-        $jakmas = Jakmas::query()
-            ->with(['user:id,name,email', 'dorm:id,name', 'revokedBy:id,name'])
-            ->orderByDesc('assigned_at')
-            ->paginate(10);
-
         $staffDormId = optional($request->user()->staff)->dorm_id;
         $staffDorm = $staffDormId ? Dorm::select('id','name')->find($staffDormId) : null;
+
+        // Scope listing to staff's dorm only
+        $jakmasQuery = Jakmas::query()
+            ->with(['user:id,name,email', 'dorm:id,name', 'revokedBy:id,name'])
+            ->orderByDesc('assigned_at');
+
+        if ($staffDormId) {
+            $jakmasQuery->where('dorm_id', $staffDormId);
+        } else {
+            // If staff has no dorm assigned, return empty list
+            $jakmasQuery->whereRaw('1 = 0');
+        }
+
+        $jakmas = $jakmasQuery->paginate(10);
 
         // Candidate students: active residents in staff dorm and not active JAKMAS
         $candidateUserIds = ResidentAssignment::query()
@@ -86,6 +95,16 @@ class JakmasController extends Controller
 
     public function revoke(Request $request, Jakmas $jakmas)
     {
+        // Only allow revoke by staff of the same dorm
+        $staffDormId = optional($request->user()->staff)->dorm_id;
+        if (!$staffDormId || $jakmas->dorm_id !== $staffDormId) {
+            return back()->withErrors(['revoke' => 'You can only revoke JAKMAS for your dorm.']);
+        }
+
+        if (!$jakmas->is_active || $jakmas->revoked_at) {
+            return back()->withErrors(['revoke' => 'This JAKMAS is already inactive.']);
+        }
+
         $jakmas->update([
             'revoked_at' => now(),
             'revoked_by' => $request->user()->id,

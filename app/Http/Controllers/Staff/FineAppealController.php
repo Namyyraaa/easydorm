@@ -84,7 +84,6 @@ class FineAppealController extends Controller
         $data = $request->validate([
             'decision' => ['required','in:approved,rejected'],
             'decision_reason' => ['required','string','max:3000'],
-            'update_fine_status' => ['nullable','in:'.implode(',', [Fine::STATUS_UNPAID, Fine::STATUS_PENDING, Fine::STATUS_PAID, Fine::STATUS_WAIVED])],
         ]);
 
         DB::transaction(function () use ($appeal, $staff, $data) {
@@ -94,15 +93,12 @@ class FineAppealController extends Controller
                 'decided_by_staff_id' => $staff->id,
                 'decision_reason' => $data['decision_reason'],
             ]);
-
-            if (!empty($data['update_fine_status'])) {
-                $payload = ['status' => $data['update_fine_status']];
-                if ($data['update_fine_status'] === Fine::STATUS_PAID) {
-                    $payload['paid_at'] = now();
-                } elseif ($data['update_fine_status'] === Fine::STATUS_WAIVED) {
-                    $payload['waived_at'] = now();
-                }
-                $appeal->fine->update($payload);
+            // Automatically waive the fine if appeal approved; otherwise keep status unchanged
+            if ($data['decision'] === 'approved') {
+                $appeal->fine->update([
+                    'status' => Fine::STATUS_WAIVED,
+                    'waived_at' => now(),
+                ]);
 
                 UserNotification::create([
                     'user_id' => (int)$appeal->fine->student_id,
@@ -110,7 +106,7 @@ class FineAppealController extends Controller
                     'data' => [
                         'fine_id' => $appeal->fine->id,
                         'fine_code' => $appeal->fine->fine_code,
-                        'status' => $appeal->fine->status,
+                        'status' => Fine::STATUS_WAIVED,
                     ],
                 ]);
             }

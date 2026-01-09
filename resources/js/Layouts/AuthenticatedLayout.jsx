@@ -41,7 +41,12 @@ export default function AuthenticatedLayout({ header, children }) {
                             </div>
 
                             <div className="hidden space-x-6 sm:-my-px sm:ms-10 sm:flex">
-                                <NavLink href={route('dashboard')} active={route().current('dashboard')}>Dashboard</NavLink>
+                                <NavLink
+                                    href={isStaff ? route('staff.dashboard') : route('dashboard')}
+                                    active={route().current('dashboard') || route().current('staff.dashboard')}
+                                >
+                                    Dashboard
+                                </NavLink>
                                 {isSuperAdmin && (
                                     <>
                                         <NavLink href={route('admin.dorms.index')} active={route().current('admin.dorms.index')}>Dorms</NavLink>
@@ -70,6 +75,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                                         <Dropdown.Content>
                                                             <Dropdown.Link href={route('staff.residents.list')}>Residents List</Dropdown.Link>
                                                             <Dropdown.Link href={route('staff.residents.assignPage')}>Resident Assignment</Dropdown.Link>
+                                                            <Dropdown.Link href={route('staff.jakmas.index')}>Assign JAKMAS</Dropdown.Link>
                                                         </Dropdown.Content>
                                                     </Dropdown>
                                                 </div>
@@ -128,7 +134,6 @@ export default function AuthenticatedLayout({ header, children }) {
                                             );
                                         })()}
                                         <NavLink href={route('staff.events.index')} active={route().current('staff.events.index')}>Events</NavLink>
-                                        <NavLink href={route('staff.jakmas.index')} active={route().current('staff.jakmas.index')}>JAKMAS</NavLink>
 
                                         {(() => {
                                             const inventoryActive = route().current('staff.inventory.items.index') || route().current('staff.inventory.stock.index') || route().current('staff.inventory.transactions.index');
@@ -223,21 +228,14 @@ export default function AuthenticatedLayout({ header, children }) {
                                             </button>
                                         </span>
                                     </Dropdown.Trigger>
-
                                     <Dropdown.Content>
-                                        <div className="px-3 py-2 w-52 whitespace-normal break-words text-sm font-medium text-violet-800 border-b border-violet-200">
+                                        <div className="px-3 py-2 w-52 whitespace-normal wrap-break-word text-sm font-medium text-violet-800 border-b border-violet-200">
                                             {user.name}
                                         </div>
-                                        <Dropdown.Link
-                                            href={route('profile.edit')}
-                                        >
+                                        <Dropdown.Link href={route('profile.edit')}>
                                             Profile
                                         </Dropdown.Link>
-                                        <Dropdown.Link
-                                            href={route('logout')}
-                                            method="post"
-                                            as="button"
-                                        >
+                                        <Dropdown.Link href={route('logout')} method="post" as="button">
                                             Log Out
                                         </Dropdown.Link>
                                     </Dropdown.Content>
@@ -295,7 +293,12 @@ export default function AuthenticatedLayout({ header, children }) {
                     }
                 >
                     <div className="space-y-1 pb-3 pt-2">
-                        <ResponsiveNavLink href={route('dashboard')} active={route().current('dashboard')}>Dashboard</ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={isStaff ? route('staff.dashboard') : route('dashboard')}
+                            active={route().current('dashboard') || route().current('staff.dashboard')}
+                        >
+                            Dashboard
+                        </ResponsiveNavLink>
                         {isSuperAdmin && (
                             <>
                                 <ResponsiveNavLink href={route('admin.dorms.index')} active={route().current('admin.dorms.index')}>Dorms</ResponsiveNavLink>
@@ -307,6 +310,7 @@ export default function AuthenticatedLayout({ header, children }) {
                                 <div className="px-4 pt-2 font-semibold text-xs text-violet-600 uppercase">Residents</div>
                                 <ResponsiveNavLink href={route('staff.residents.list')} active={route().current('staff.residents.list')}>Residents List</ResponsiveNavLink>
                                 <ResponsiveNavLink href={route('staff.residents.assignPage')} active={route().current('staff.residents.assignPage')}>Resident Assignment</ResponsiveNavLink>
+                                <ResponsiveNavLink href={route('staff.jakmas.index')} active={route().current('staff.jakmas.index')}>Assign JAKMAS</ResponsiveNavLink>
                                 <ResponsiveNavLink href={route('staff.maintenance.index')} active={route().current('staff.maintenance.index')}>Maintenance</ResponsiveNavLink>
                                 <ResponsiveNavLink href={route('staff.complaints.index')} active={route().current('staff.complaints.index')}>Complaints</ResponsiveNavLink>
                                 <div className="px-4 pt-2 font-semibold text-xs text-violet-600 uppercase">Fines</div>
