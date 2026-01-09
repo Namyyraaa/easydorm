@@ -43,7 +43,7 @@ class VisitorController extends Controller
             ->whereNotNull('out_time')
             ->orderByDesc('out_time')
             ->limit(50)
-            ->get(['id','visitor_name','company','phone','arrival_time','out_time','block_id','room_id']);
+            ->get(['id','visitor_name','company','phone','arrival_time','out_time','block_id','room_id','entry_reason']);
 
         return Inertia::render('Staff/Visitors/Index', [
             'blocks' => $blocks,

@@ -128,7 +128,7 @@ export default function Transactions() {
         };
 
         return (
-            <AuthenticatedLayout header={<h2 className="text-xl font-semibold leading-tight text-gray-800">Inventory Transactions - {dorm?.code}</h2>}>
+            <AuthenticatedLayout header={<h2 className="text-xl font-semibold leading-tight text-gray-800">Inventory Transactions - {(dorm?.code || '').toUpperCase()}</h2>}>
                 <Head title="Inventory Transactions" />
                 <div className="py-12 space-y-6">
                     {(flash.success || flash.error) && (

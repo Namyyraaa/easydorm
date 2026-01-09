@@ -72,7 +72,7 @@ export default function Items() {
     const displayItems = useMemo(() => filtered.slice(start, end), [filtered, start, end]);
 
     return (
-        <AuthenticatedLayout header={<h2 className="text-xl font-semibold leading-tight text-gray-800">Inventory Items {dorm ? `— ${dorm.name}` : ''}</h2>}>
+        <AuthenticatedLayout header={<h2 className="text-xl font-semibold leading-tight text-gray-800">Inventory Items - {(dorm?.code || '').toUpperCase()}</h2>}>
             <Head title="Inventory Items" />
             <div className="py-12 space-y-6">
                 {(flash.success || flash.error) && (

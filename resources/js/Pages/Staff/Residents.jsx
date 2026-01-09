@@ -8,6 +8,7 @@ export default function Residents() {
   const residents = props.residents || [];
   const myDorm = props.myDorm || null;
   const rooms = props.rooms || [];
+  const blocks = props.blocks || [];
   const flash = props.flash || {};
 
   const assignForm = useForm({ student_id: '', room_id: '', check_in_date: '', check_out_date: ''});
@@ -70,11 +71,11 @@ export default function Residents() {
   const [bulkView, setBulkView] = useState('blocks'); // 'blocks' | 'rooms'
   const [bulkBlock, setBulkBlock] = useState(null);
 
-  // Derive block list
+  // Derive block list from backend-provided blocks (shows all active blocks, even if no rooms yet)
   const allBlocks = useMemo(() => {
-    const set = new Set((rooms || []).map(r => r.block).filter(Boolean));
+    const set = new Set((blocks || []).map(b => b.name).filter(Boolean));
     return Array.from(set);
-  }, [rooms]);
+  }, [blocks]);
 
   // Enabled blocks based on gender-filtered rooms
   const enabledBlocksSingle = useMemo(() => {

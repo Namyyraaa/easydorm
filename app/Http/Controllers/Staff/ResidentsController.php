@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Staff;
 
 use App\Http\Controllers\Controller;
 use App\Models\Dorm;
+use App\Models\Block;
 use App\Models\Room;
 use App\Models\ResidentAssignment;
 use App\Models\Staff;
@@ -56,7 +57,14 @@ class ResidentsController extends Controller
 
         // Rooms in staff's dorm with availability
         $rooms = collect();
+        $blocks = collect();
         if ($staffDormId) {
+            // Load all active blocks for this dorm so UI can show full block list
+            $blocks = Block::active()
+                ->where('dorm_id', $staffDormId)
+                ->orderBy('name')
+                ->get(['id','name','gender']);
+
             $rooms = Room::active()
                 ->where('dorm_id', $staffDormId)
                 ->with('block:id,name,gender')
@@ -80,6 +88,7 @@ class ResidentsController extends Controller
             'students' => $unassignedStudents,
             'myDorm' => $staff?->dorm?->only(['id','name','code']),
             'rooms' => $rooms,
+            'blocks' => $blocks,
         ]);
     }
 
