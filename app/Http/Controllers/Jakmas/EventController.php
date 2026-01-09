@@ -107,8 +107,35 @@ class EventController extends Controller
             }
         }
         $event->load(['media','registrations.user','attendance.user']);
+
+        // Build registered students list with dorm code and attendance status (Absent/Attended)
+        $registrations = $event->registrations; // Collection of EventRegistration
+        $attendance = $event->attendance; // Collection of EventAttendance
+
+        $registeredUserIds = $registrations->pluck('user_id')->unique()->values();
+        $attendedUserIds = $attendance->pluck('user_id')->unique()->values();
+
+        // Load active resident assignments to get dorm codes
+        $assignments = \App\Models\ResidentAssignment::active()
+            ->whereIn('student_id', $registeredUserIds)
+            ->with('dorm:id,code')
+            ->get()
+            ->keyBy('student_id');
+
+        $registeredStudents = $registrations->map(function($reg) use ($assignments, $attendedUserIds) {
+            $user = $reg->user;
+            $assignment = $assignments->get($reg->user_id);
+            return [
+                'id' => $reg->user_id,
+                'name' => $user ? $user->name : 'Unknown',
+                'dorm_code' => $assignment && $assignment->dorm ? ($assignment->dorm->code ?? null) : null,
+                'status' => $attendedUserIds->contains($reg->user_id) ? 'Attended' : 'Absent',
+            ];
+        })->values();
+
         return Inertia::render('Jakmas/Events/Show', [
             'event' => $event,
+            'registeredStudents' => $registeredStudents,
         ]);
     }
 

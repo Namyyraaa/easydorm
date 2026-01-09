@@ -1,12 +1,26 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, usePage, Link } from '@inertiajs/react';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 export default function ComplaintsIndex() {
   const { props } = usePage();
   const items = props.items || [];
-  const statusParam = (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('status')) || '';
-  const filteredItems = statusParam ? items.filter((it) => it.status === statusParam) : items;
+  // Status filter: mirror student maintenance index
+  const statuses = useMemo(() => ['all', ...Array.from(new Set(items.map((it) => it.status).filter(Boolean)))], [items]);
+  const initialStatus = (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('status')) || 'all';
+  const [statusFilter, setStatusFilter] = useState(initialStatus);
+  const filteredItems = useMemo(() => {
+    return items.filter((it) => (statusFilter === 'all' || it.status === statusFilter));
+  }, [items, statusFilter]);
+
+  // Pagination: same pattern as other student index tables
+  const [page, setPage] = useState(1);
+  const pageSize = 10;
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / pageSize));
+  const start = (page - 1) * pageSize;
+  const end = start + pageSize;
+  const displayItems = useMemo(() => filteredItems.slice(start, end), [filteredItems, start, end]);
+  useEffect(() => { setPage(1); }, [statusFilter]);
   const flash = props.flash || {};
 
   const form = useForm({ title: '', description: '', is_anonymous: false, images: [] });
@@ -98,6 +112,24 @@ export default function ComplaintsIndex() {
           {activeTab === 'list' && (
             <div className="bg-white shadow sm:rounded-lg p-6">
               <h3 className="font-semibold mb-3">My Complaints</h3>
+              {/* Filters: Status + Reset, mirroring maintenance index */}
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex gap-3">
+                  <div className="flex items-center">
+                    <label className="text-sm text-gray-600">Status</label>
+                    <select
+                      value={statusFilter}
+                      onChange={(e) => setStatusFilter(e.target.value)}
+                      className="ml-2 rounded border-gray-300 text-sm focus:outline-none transition-shadow hover:ring-2 hover:ring-purple-300 hover:ring-offset-1 focus:ring-2 focus:ring-purple-700 focus:ring-offset-1"
+                    >
+                      {statuses.map((s) => (
+                        <option key={s} value={s}>{s === 'all' ? 'All' : s}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <button onClick={() => { setStatusFilter('all'); }} className="text-sm text-gray-600 hover:underline">Reset</button>
+              </div>
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-gray-600">
@@ -108,7 +140,7 @@ export default function ComplaintsIndex() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredItems.map((it) => (
+                  {displayItems.map((it) => (
                     <tr key={it.id} className="border-t">
                       <td className="py-2">{it.title}</td>
                       <td>{it.created_at ? new Date(it.created_at).toLocaleDateString() : ''}</td>
@@ -118,13 +150,26 @@ export default function ComplaintsIndex() {
                       </td>
                     </tr>
                   ))}
-                  {filteredItems.length === 0 && (
+                  {displayItems.length === 0 && (
                     <tr>
                       <td colSpan="4" className="py-3 text-gray-600">No complaints yet.</td>
                     </tr>
                   )}
                 </tbody>
               </table>
+
+              {filteredItems.length > 0 && (
+                <div className="mt-4 flex items-center justify-between">
+                  <div className="text-sm text-gray-600">Showing {start + 1} - {Math.min(end, filteredItems.length)} of {filteredItems.length}</div>
+                  <div className="flex items-center gap-1">
+                    <button disabled={page === 1} onClick={() => setPage((p) => Math.max(1, p - 1))} className="px-2 py-1 rounded border text-sm disabled:opacity-50">Prev</button>
+                    {Array.from({ length: totalPages }).map((_, i) => (
+                      <button key={i} onClick={() => setPage(i + 1)} className={`px-2 py-1 rounded border text-sm ${page === i + 1 ? 'bg-indigo-600 text-white border-indigo-600' : ''}`}>{i + 1}</button>
+                    ))}
+                    <button disabled={page === totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))} className="px-2 py-1 rounded border text-sm disabled:opacity-50">Next</button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

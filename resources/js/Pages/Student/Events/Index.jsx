@@ -249,7 +249,7 @@ export default function Index({ events, announcements }) {
                         <td><span className={`uppercase text-xs px-2 py-0.5 rounded ${badgeClassFor(a.visibility)} transition-shadow hover:ring-2 hover:ring-purple-300 hover:ring-offset-1`}>{visibilityLabelFor(a)}</span></td>
                         <td className="py-2 w-24">
                           <div className="flex items-center gap-2">
-                            <Link href={route('student.events.show', a.id)} className="inline-flex items-center px-3 py-1 rounded border text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-300">
+                            <Link href={route('student.events.show', a.id)} className="inline-flex items-center px-3 py-1 rounded bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-1">
                               View
                             </Link>
                           </div>
@@ -326,7 +326,7 @@ export default function Index({ events, announcements }) {
                         <td><span className={`uppercase text-xs px-2 py-0.5 rounded ${badgeClassFor(e.visibility)} transition-shadow hover:ring-2 hover:ring-purple-300 hover:ring-offset-1`}>{visibilityLabelFor(e)}</span></td>
                         <td className="py-2 w-24">
                           <div className="flex items-center gap-2">
-                            <Link href={route('student.events.show', e.id)} className="inline-flex items-center px-3 py-1 rounded border text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-300">
+                            <Link href={route('student.events.show', e.id)} className="inline-flex items-center px-3 py-1 rounded bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-1">
                               View
                             </Link>
                             {isRegistered(e) || registeredIds[e.id] ? (

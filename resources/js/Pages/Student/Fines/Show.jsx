@@ -71,7 +71,9 @@ export default function StudentFinesShow() {
             <form onSubmit={submitPaymentProof} className="space-y-3">
               <div>
                 <label className="block text-sm font-medium">Upload proof (image or PDF)</label>
-                <input type="file" accept="image/*,application/pdf" className="mt-1 w-full" onChange={(e) => onProofChange(e.target.files)} />
+                <input id="payment-proof" type="file" accept="image/*,application/pdf" className="sr-only" onChange={(e) => onProofChange(e.target.files)} />
+                <label htmlFor="payment-proof" className="mt-1 inline-flex items-center rounded-lg border border-violet-300 bg-white px-4 py-2 text-violet-700 shadow-sm transition hover:bg-violet-50 focus:outline-none focus:ring-2 focus:ring-violet-300 cursor-pointer">Choose file</label>
+                <p className="mt-1 text-xs text-gray-500">You can upload an image or PDF as payment proof.</p>
                 {payForm.errors.proof && <p className="text-sm text-red-600">{payForm.errors.proof}</p>}
                 {payPreview && (
                   <div className="mt-3">

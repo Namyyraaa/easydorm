@@ -82,6 +82,14 @@ export default function Show({ event, isRegistered, isRegistrationOpen }) {
     }
   };
 
+  // Determine attendance availability window
+  const now = new Date();
+  const startAt = event?.starts_at ? new Date(event.starts_at) : null;
+  const endAt = event?.ends_at ? new Date(event.ends_at) : null;
+  const beforeStart = !!(startAt && now < startAt);
+  const afterEnd = !!(endAt && now > endAt);
+  const isDuringEvent = !!(startAt && now >= startAt && (!endAt || now <= endAt));
+
   return (
     <AuthenticatedLayout header={<h2 className="text-xl font-semibold leading-tight text-gray-800">{event.type === 'announcement' ? 'Announcement' : 'Event'}: {event.name}</h2>}>
       <Head title={`${event.type === 'announcement' ? 'Announcement Detail' : 'Event Detail'}`} />
@@ -179,11 +187,29 @@ export default function Show({ event, isRegistered, isRegistrationOpen }) {
                 <h3 className="font-semibold mb-3">Attendance Password</h3>
                 {isRegistered ? (
                   <form onSubmit={attend} className="flex gap-2">
-                    <input className="h-10 w-full rounded border border-violet-200 p-2" placeholder="Attendance Password" value={attForm.data.attendance_password} onChange={e=>attForm.setData('attendance_password', e.target.value)} />
-                    <button className="inline-flex items-center h-10 px-4 rounded bg-violet-600 text-white disabled:opacity-50" disabled={attForm.processing}>Confirm</button>
+                    <input
+                      className="h-10 w-full rounded border border-violet-200 p-2 disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed"
+                      placeholder="Attendance Password"
+                      value={attForm.data.attendance_password}
+                      onChange={e=>attForm.setData('attendance_password', e.target.value)}
+                      disabled={!isDuringEvent}
+                    />
+                    <button
+                      className={`inline-flex items-center h-10 px-4 rounded text-white ${isDuringEvent ? 'bg-violet-600' : 'bg-gray-400 cursor-not-allowed'} disabled:opacity-50`}
+                      disabled={!isDuringEvent || attForm.processing}
+                    >
+                      {attForm.processing ? 'Submitting…' : 'Confirm'}
+                    </button>
                   </form>
                 ) : (
                   <div className="p-3 bg-gray-50 rounded text-sm text-gray-700">Register to unlock attendance.</div>
+                )}
+                {isRegistered && !isDuringEvent && (
+                  <p className="mt-2 text-sm text-gray-600">
+                    {beforeStart && 'Attendance will open when the event starts.'}
+                    {afterEnd && 'Attendance is closed. The event has ended.'}
+                    {!beforeStart && !afterEnd && 'Attendance is currently unavailable.'}
+                  </p>
                 )}
               </div>
             </>

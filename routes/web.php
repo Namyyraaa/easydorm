@@ -34,11 +34,10 @@ Route::get('/dashboard', function (\Illuminate\Http\Request $request) {
     if ($user && method_exists($user, 'isStaff') && $user->isStaff()) {
         return redirect()->route('staff.dashboard');
     }
-    // Redirect authenticated students to their dashboard
+    // Redirect authenticated students (non-staff, non-superadmin) to their dashboard
     if ($user
         && method_exists($user, 'isSuperAdmin') && !$user->isSuperAdmin()
         && method_exists($user, 'isStaff') && !$user->isStaff()
-        && method_exists($user, 'isJakmas') && !$user->isJakmas()
     ) {
         return redirect()->route('student.dashboard');
     }

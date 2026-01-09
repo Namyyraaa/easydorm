@@ -120,7 +120,7 @@ export default function JakmasEventsIndex() {
                   </div>
                   <label className="inline-flex items-center text-sm text-gray-700">
                     <input type="checkbox" className="mr-2 rounded border-gray-300" checked={mineOnly} onChange={e=>setMineOnly(e.target.checked)} />
-                    Mine only
+                    Created by me
                   </label>
                 </div>
                 <button onClick={() => { setStatusFilter('all'); setTypeFilter('all'); setMineOnly(false); }} className="text-sm text-gray-600 hover:underline">Reset</button>
