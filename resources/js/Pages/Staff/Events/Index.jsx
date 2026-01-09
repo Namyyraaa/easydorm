@@ -191,11 +191,11 @@ export default function StaffEventsIndex() {
                       <td>
                         {String(e.created_by) === String(userId) ? (
                           <Link href={route('staff.events.show', e.id)} className="inline-flex items-center px-3 py-1 rounded bg-indigo-600 text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-1">
-                            Manage
+                            View
                           </Link>
                         ) : (
                           <button className="inline-flex items-center px-3 py-1 rounded bg-gray-200 text-gray-500 cursor-not-allowed" disabled>
-                            Manage
+                            View
                           </button>
                         )}
                       </td>

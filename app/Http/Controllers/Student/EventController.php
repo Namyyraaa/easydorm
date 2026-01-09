@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
 use App\Models\Event;
+use App\Models\Dorm;
 use App\Models\EventAttendance;
 use App\Models\EventRegistration;
 use App\Models\ResidentAssignment;
@@ -18,6 +19,7 @@ class EventController extends Controller
         $user = $request->user();
         $now = now();
         $events = Event::query()
+            ->with(['dorm:id,code,name'])
             ->withCount('registrations')
             ->where('type', 'event')
             ->where(function($q) use ($now) {
@@ -27,6 +29,8 @@ class EventController extends Controller
             ->paginate(10, ['*'], 'events_page');
 
         $announcements = Event::query()
+            ->with(['dorm:id,code,name'])
+            ->withCount('registrations')
             ->where('type', 'announcement')
             ->orderByDesc('starts_at')
             ->paginate(10, ['*'], 'announcements_page');
@@ -38,10 +42,22 @@ class EventController extends Controller
                 ->pluck('event_id');
         }
 
+        $studentDormCode = null;
+        if ($user) {
+            $residentDormId = ResidentAssignment::query()
+                ->where('student_id', $user->id)
+                ->active()
+                ->value('dorm_id');
+            if ($residentDormId) {
+                $studentDormCode = optional(Dorm::query()->select('code')->find($residentDormId))->code;
+            }
+        }
+
         return Inertia::render('Student/Events/Index', [
             'events' => $events,
             'announcements' => $announcements,
             'userRegisteredEventIds' => $userRegisteredEventIds,
+            'studentDormCode' => $studentDormCode,
         ]);
     }
 
@@ -50,6 +66,7 @@ class EventController extends Controller
         $user = $request->user();
         $now = now();
         $event->load(['media']);
+        $event->loadCount('registrations');
 
         $isRegistered = $event->registrations()
             ->where('user_id', $user->id)
