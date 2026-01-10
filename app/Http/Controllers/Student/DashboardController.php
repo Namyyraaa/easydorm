@@ -96,6 +96,48 @@ class DashboardController extends Controller
         $fineStats = array_values($fineByStatus);
         $fineStats[] = $fineCreated; // include total created for center text if needed
 
+        // Profile completeness (for personalized room assignment alert)
+        $profile = $user->profile; // ensured by User::booted
+        $fieldsComplete = $profile
+            && ($profile->gender ?? null)
+            && ($profile->intake_session ?? null)
+            && ($profile->faculty_id ?? null)
+            && ($profile->interaction_style ?? null)
+            && ($profile->daily_schedule ?? null);
+        $hasHobbies = $user->hobbies()->exists();
+        $profileComplete = (bool) ($fieldsComplete && $hasHobbies);
+
+        // Current roommates (other active residents in same room)
+        $roommates = [];
+        if ($assignment) {
+            $roommateRows = ResidentAssignment::query()
+                ->active()
+                ->where('dorm_id', $assignment->dorm_id)
+                ->where('block_id', $assignment->block_id)
+                ->where('room_id', $assignment->room_id)
+                ->where('student_id', '!=', $user->id)
+                ->with(['student.profile.faculty', 'student.hobbies'])
+                ->get();
+            foreach ($roommateRows as $ra) {
+                $s = $ra->student;
+                if (!$s) continue;
+                $p = $s->profile;
+                $roommates[] = [
+                    'id' => $s->id,
+                    'name' => $s->name,
+                    'check_in_date' => optional($ra->check_in_date)->toDateString(),
+                    'check_out_date' => optional($ra->check_out_date)->toDateString(),
+                    'gender' => $p->gender ?? null,
+                    'intake_session' => $p->intake_session ?? null,
+                    'faculty' => optional($p->faculty)->name ?? null,
+                    'faculty_code' => optional($p->faculty)->code ?? null,
+                    'interaction_style' => $p->interaction_style ?? null,
+                    'daily_schedule' => $p->daily_schedule ?? null,
+                    'hobbies' => $s->hobbies->pluck('name')->all() ?? [],
+                ];
+            }
+        }
+
         return Inertia::render('Student/Dashboard', [
             'user' => $user,
             'resident' => $isResident,
@@ -120,12 +162,15 @@ class DashboardController extends Controller
             'maintenanceStats' => $maintenanceStats,
             'complaintStats' => $complaintStats,
             'fineStats' => $fineStats,
+            'profileComplete' => $profileComplete,
+            'roommates' => $roommates,
             'routes' => [
                 'eventsIndex' => route('student.events.index'),
                 'eventsShow' => url('/student/events'), // use /student/events/{id}
                 'maintenanceIndex' => route('student.maintenance.index'),
                 'complaintsIndex' => route('student.complaints.index'),
                 'finesIndex' => route('student.fines.index'),
+                'profileEdit' => route('profile.edit'),
             ],
         ]);
     }

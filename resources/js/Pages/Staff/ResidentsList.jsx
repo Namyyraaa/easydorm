@@ -68,7 +68,7 @@ export default function ResidentsList() {
         <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
           <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg p-6">
             <div className="mb-4 flex items-center justify-between gap-4">
-              <h3 className="font-semibold">Residents List — {myDorm ? `${myDorm.name} (${myDorm.code})` : 'My Dorm'}</h3>
+              <h3 className="font-semibold">Residents List — {myDorm ? `${myDorm.name}` : 'My Dorm'}</h3>
               <button
                 type="button"
                 onClick={() => { setBlockFilter('all'); setRoomFilter('all'); setPage(1); }}

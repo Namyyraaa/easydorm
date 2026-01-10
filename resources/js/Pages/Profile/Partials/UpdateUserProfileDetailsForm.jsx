@@ -42,7 +42,7 @@ export default function UpdateUserProfileDetailsForm({ className = '' }) {
         <div>
           <label className="block text-sm font-medium text-gray-700">Gender</label>
           <select
-            className="mt-1 w-full rounded border border-gray-300 shadow-sm text-sm p-2 focus:outline-none transition-shadow hover:ring-2 hover:ring-purple-300 hover:ring-offset-1 focus:ring-2 focus:ring-purple-700 focus:ring-offset-1"
+            className="mt-1 block w-full shadow border-violet-200 transition-shadow hover:ring-2 hover:ring-violet-300 focus:border-violet-500 focus:ring-violet-500 px-2 py-2 rounded"
             value={form.data.gender}
             onChange={(e) => form.setData('gender', e.target.value)}
           >
@@ -56,7 +56,7 @@ export default function UpdateUserProfileDetailsForm({ className = '' }) {
         <div>
           <label className="block text-sm font-medium text-gray-700">Intake Session (e.g. 24/25)</label>
           <input
-            className="mt-1 w-full rounded border border-gray-300 shadow-sm text-sm p-2 focus:outline-none transition-shadow hover:ring-2 hover:ring-purple-300 hover:ring-offset-1 focus:ring-2 focus:ring-purple-700 focus:ring-offset-1"
+            className="mt-1 block w-full shadow border-violet-200 transition-shadow hover:ring-2 hover:ring-violet-300 focus:border-violet-500 focus:ring-violet-500 px-2 py-2 rounded"
             placeholder="24/25"
             value={form.data.intake_session}
             onChange={(e) => form.setData('intake_session', e.target.value)}
@@ -67,7 +67,7 @@ export default function UpdateUserProfileDetailsForm({ className = '' }) {
         <div>
           <label className="block text-sm font-medium text-gray-700">Faculty</label>
           <select
-            className="mt-1 w-full rounded border border-gray-300 shadow-sm text-sm p-2 focus:outline-none transition-shadow hover:ring-2 hover:ring-purple-300 hover:ring-offset-1 focus:ring-2 focus:ring-purple-700 focus:ring-offset-1"
+            className="mt-1 block w-full shadow border-violet-200 transition-shadow hover:ring-2 hover:ring-violet-300 focus:border-violet-500 focus:ring-violet-500 px-2 py-2 rounded"
             value={form.data.faculty_id}
             onChange={(e) => form.setData('faculty_id', e.target.value)}
           >
@@ -82,7 +82,7 @@ export default function UpdateUserProfileDetailsForm({ className = '' }) {
         <div>
           <label className="block text-sm font-medium text-gray-700">Interaction Style</label>
           <select
-            className="mt-1 w-full rounded border border-gray-300 shadow-sm text-sm p-2 focus:outline-none transition-shadow hover:ring-2 hover:ring-purple-300 hover:ring-offset-1 focus:ring-2 focus:ring-purple-700 focus:ring-offset-1"
+            className="mt-1 block w-full shadow border-violet-200 transition-shadow hover:ring-2 hover:ring-violet-300 focus:border-violet-500 focus:ring-violet-500 px-2 py-2 rounded"
             value={form.data.interaction_style}
             onChange={(e) => form.setData('interaction_style', e.target.value)}
           >
@@ -97,7 +97,7 @@ export default function UpdateUserProfileDetailsForm({ className = '' }) {
         <div>
           <label className="block text-sm font-medium text-gray-700">Daily Schedule</label>
           <select
-            className="mt-1 w-full rounded border border-gray-300 shadow-sm text-sm p-2 focus:outline-none transition-shadow hover:ring-2 hover:ring-purple-300 hover:ring-offset-1 focus:ring-2 focus:ring-purple-700 focus:ring-offset-1"
+            className="mt-1 block w-full shadow border-violet-200 transition-shadow hover:ring-2 hover:ring-violet-300 focus:border-violet-500 focus:ring-violet-500 px-2 py-2 rounded"
             value={form.data.daily_schedule}
             onChange={(e) => form.setData('daily_schedule', e.target.value)}
           >
@@ -110,8 +110,8 @@ export default function UpdateUserProfileDetailsForm({ className = '' }) {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">Hobbies</label>
-          <div className="border rounded p-2">
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
+          <div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-2">
               {hobbies.map(h => {
                 const selected = (form.data.hobby_ids || []).includes(h.id);
                 return (
@@ -120,7 +120,7 @@ export default function UpdateUserProfileDetailsForm({ className = '' }) {
                     type="button"
                     aria-pressed={selected}
                     onClick={() => toggleHobby(h.id, !selected)}
-                    className={`h-9 w-full inline-flex items-center justify-center rounded border text-sm transition-shadow focus:outline-none hover:ring-2 hover:ring-purple-300 hover:ring-offset-1 focus:ring-2 focus:ring-purple-700 focus:ring-offset-1 ${selected ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-700 border-gray-300'}`}
+                    className={`h-9 w-full shadow inline-flex items-center justify-center rounded border text-sm transition-shadow focus:outline-none hover:ring-2 hover:ring-violet-300 focus:ring-2 focus:ring-violet-700 ${selected ? 'bg-violet-500 text-white border-violet-500' : 'bg-white text-gray-700 border-gray-300'}`}
                   >
                     <span className="capitalize">{h.name}</span>
                   </button>
@@ -134,8 +134,13 @@ export default function UpdateUserProfileDetailsForm({ className = '' }) {
           {form.errors.hobby_ids && <p className="text-sm text-red-600">{form.errors.hobby_ids}</p>}
         </div>
 
-        <div className="flex items-center gap-4">
-          <PrimaryButton disabled={form.processing}>Save</PrimaryButton>
+        <div className="flex items-center justify-end gap-4">
+          <PrimaryButton
+            className="ms-4 bg-violet-600 hover:bg-violet-700 focus:bg-violet-700 focus:ring-violet-400"
+            disabled={form.processing}
+          >
+            Save
+          </PrimaryButton>
           {form.recentlySuccessful && <p className="text-sm text-gray-600">Saved.</p>}
         </div>
       </form>

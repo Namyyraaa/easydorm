@@ -4,7 +4,7 @@ import AppHeader from '@/Components/AppHeader';
 export default function Welcome({ auth }) {
     return (
         <>
-            <Head title="ResiDorm - Welcome" />
+            <Head title="Homepage" />
             <div
                 className="relative min-h-screen text-violet-900 bg-cover bg-center bg-no-repeat"
                 style={{ backgroundImage: "url('/images/residormumspic.png')" }}

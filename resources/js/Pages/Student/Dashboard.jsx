@@ -1,5 +1,7 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
 import { Head, usePage, Link } from "@inertiajs/react";
+import { useState } from 'react';
+import { Users, Clock, Calendar, MoreHorizontal } from 'lucide-react';
 import { Doughnut } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -51,7 +53,16 @@ export default function StudentDashboard() {
     fineStats = [],
     upcomingRegisteredEvent,
     routes = {},
+    profileComplete = true,
+    roommates = [],
   } = props;
+
+  const [expandedHobbies, setExpandedHobbies] = useState({});
+  const HOBBY_DISPLAY_LIMIT = 4;
+
+  const toggleHobbies = (id) => {
+    setExpandedHobbies(prev => ({ ...prev, [id]: !prev[id] }));
+  };
 
   // Fines donut (exclude Created from slices)
   const fineLabelsAll = fineStats.map((f) => f.label);
@@ -171,6 +182,18 @@ export default function StudentDashboard() {
       <Head title="Student Dashboard" />
       <div className="py-6">
         <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
+          {/* Profile completion alert (students only, when incomplete) */}
+          {!profileComplete && (
+            <div className="overflow-hidden bg-yellow-50 border border-yellow-200 text-yellow-800 shadow-sm sm:rounded-lg mb-4">
+              <div className="p-4 flex items-center justify-between">
+                <div>
+                  <div className="font-semibold">Complete Your Profile</div>
+                  <p className="text-sm mt-1">For more personalized room assignment, please complete your profile details.</p>
+                </div>
+                <Link href={routes.profileEdit || "/profile"} className="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-xs font-medium text-white hover:bg-indigo-700">Update Profile</Link>
+              </div>
+            </div>
+          )}
           {/* Greeting */}
           <div className="mb-4">
             <div className="text-2xl font-bold text-violet-800">
@@ -253,6 +276,54 @@ export default function StudentDashboard() {
               </div>
             </div>
           )}
+
+          {/* Roommates card (active residency only) */}
+          {resident && residency?.is_active && (
+            <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg mb-6">
+              <div className="p-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold">Your Roommates</h3>
+                </div>
+                <div className="mt-2 text-sm">
+                  {Array.isArray(roommates) && roommates.length > 0 ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                      {roommates.map((rm) => {
+                        const hobbies = Array.isArray(rm.hobbies) ? rm.hobbies : [];
+                        const expanded = !!expandedHobbies[rm.id];
+                        return (
+                          <div key={rm.id} className="rounded p-3 bg-white shadow-md ring-1 ring-violet-100">
+                            <div>
+                              <div className="text-sm font-semibold truncate" title={rm.name}>{rm.name}</div>
+                              <div className="text-xs text-gray-500">{(rm.faculty_code || rm.faculty) ? `${rm.faculty_code || rm.faculty} - ${rm.intake_session || '-'} ` : (rm.intake_session || '-')}</div>
+                              <div className="mt-3 text-xs text-gray-600 flex items-center gap-2"><Calendar className="w-4 h-4" /> <span>{formatDateOnly(rm.check_in_date)} → {rm.check_out_date ? formatDateOnly(rm.check_out_date) : 'Present'}</span></div>
+                              <div className="flex items-center gap-3 mt-2 text-xs text-gray-600">
+                                <div className="flex items-center gap-1"><Users className="w-4 h-4" /> <span className="capitalize">{(rm.interaction_style || '').replace(/_/g, ' ') || '-'}</span></div>
+                                <div className="flex items-center gap-1"><Clock className="w-4 h-4" /> <span className="capitalize">{(rm.daily_schedule || '').replace(/_/g, ' ') || '-'}</span></div>
+                              </div>
+                            </div>
+                            <div className="mt-3">
+                              <div className="flex flex-wrap gap-2">
+                                {hobbies.slice(0, expanded ? hobbies.length : HOBBY_DISPLAY_LIMIT).map((h, idx) => (
+                                  <span key={idx} className="text-[12px] bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">{h ? (h.charAt(0).toUpperCase() + h.slice(1)) : h}</span>
+                                ))}
+                                {hobbies.length > HOBBY_DISPLAY_LIMIT && (
+                                  <button type="button" onClick={() => toggleHobbies(rm.id)} className="text-xs text-indigo-600 hover:underline inline-flex items-center gap-1"><MoreHorizontal className="w-3 h-3" /> {expanded ? 'Show less' : `+${hobbies.length - HOBBY_DISPLAY_LIMIT} more`}</button>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-gray-600">No roommates currently.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+
 
           {/* Non-resident: 2-row grid with fines spanning (JOIN+UPCOMING first row, EVENTS second row) */}
           {!resident && (
