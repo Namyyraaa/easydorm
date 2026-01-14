@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             DormSeeder::class,
             FacultySeeder::class,
             HobbiesSeeder::class,
+            UsersSeeder::class,
         ]);
 
         User::factory()->create([
