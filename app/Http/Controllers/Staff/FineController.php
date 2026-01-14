@@ -84,7 +84,7 @@ class FineController extends Controller
 
         $data = $request->validate([
             'student_id' => ['required','exists:users,id'],
-            'block_id' => ['nullable','exists:blocks,id'],
+            'block_id' => ['nullable','exists:dorm_blocks,id'],
             'room_id' => ['nullable','exists:rooms,id'],
             'category' => ['required','in:'.implode(',', Fine::CATEGORIES)],
             'amount_rm' => ['required','numeric','min:0'],
