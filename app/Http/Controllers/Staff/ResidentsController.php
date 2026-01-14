@@ -101,6 +101,8 @@ class ResidentsController extends Controller
             ->when($staffDormId, fn ($q) => $q->where('dorm_id', $staffDormId))
             ->with([
                 'student:id,name,email',
+                'student.profile:id,user_id,gender,faculty_id',
+                'student.profile.faculty:id,code,name',
                 'dorm:id,code,name',
                 'room:id,block_id,room_number,capacity',
                 'room.block:id,name,gender'

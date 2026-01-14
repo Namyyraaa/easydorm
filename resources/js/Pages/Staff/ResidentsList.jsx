@@ -60,6 +60,15 @@ export default function ResidentsList() {
     return '-';
   };
 
+  const cap = (s) => {
+    if (!s) return '-';
+    try {
+      const str = String(s);
+      return str.charAt(0).toUpperCase() + str.slice(1);
+    } catch (_) {
+      return '-';
+    }
+  };
   return (
     <AuthenticatedLayout header={<h2 className="text-xl font-semibold leading-tight text-gray-800">Residents</h2>}>
       <Head title="Residents List" />
@@ -160,19 +169,18 @@ export default function ResidentsList() {
                               <div className="font-semibold text-violet-800 mb-1">Student</div>
                               <div><span className="text-gray-600">Name:</span> {r.student?.name || '-'}</div>
                               <div><span className="text-gray-600">Email:</span> {r.student?.email || '-'}</div>
-                              <div><span className="text-gray-600">Gender:</span> {r.student?.gender || '-'}</div>
-                              <div><span className="text-gray-600">Phone:</span> {r.student?.phone || r.student?.profile?.phone || '-'}</div>
-                              <div><span className="text-gray-600">Faculty:</span> {r.student?.faculty?.name || r.student?.faculty_name || '-'}</div>
+                              <div><span className="text-gray-600">Gender:</span> {cap(r.student?.profile?.gender)}</div>
+                              <div><span className="text-gray-600">Faculty:</span> {r.student?.profile?.faculty?.code || '-'}</div>
                               {Array.isArray(r.student?.hobbies) && r.student.hobbies.length > 0 && (
                                 <div><span className="text-gray-600">Hobbies:</span> {r.student.hobbies.join(', ')}</div>
                               )}
                             </div>
                             <div>
                               <div className="font-semibold text-violet-800 mb-1">Assignment</div>
-                              <div><span className="text-gray-600">Dorm:</span> {r.dorm?.name || '-'} {r.dorm?.code ? `(${r.dorm.code})` : ''}</div>
+                              <div><span className="text-gray-600">Dorm:</span> {r.dorm?.name || '-'} {r.dorm?.code ? `(${String(r.dorm.code).toUpperCase()})` : ''}</div>
                               <div><span className="text-gray-600">Block:</span> {r.room?.block?.name || '-'}</div>
                               <div><span className="text-gray-600">Room:</span> {r.room?.room_number || '-'}</div>
-                              <div><span className="text-gray-600">Room Gender:</span> {r.room?.gender || '-'}</div>
+                              <div><span className="text-gray-600">Room Gender:</span> {cap(r.room?.block?.gender || '-')}</div>
                               <div><span className="text-gray-600">Capacity:</span> {typeof r.room?.capacity !== 'undefined' ? r.room.capacity : '-'}</div>
                             </div>
                             <div>

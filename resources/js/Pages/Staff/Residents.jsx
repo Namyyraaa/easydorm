@@ -164,6 +164,24 @@ export default function Residents() {
     });
   };
 
+  // Date helpers: add/subtract days and validate checkout > checkin
+  const addDays = (dateStr, days) => {
+    if (!dateStr) return '';
+    const d = new Date(dateStr + 'T00:00:00');
+    if (Number.isNaN(d.getTime())) return '';
+    d.setDate(d.getDate() + days);
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
+  const isCheckoutValidForCheckin = (checkout, checkin) => {
+    if (!checkout || !checkin) return true;
+    // require checkout to be strictly after checkin (no same-day checkout)
+    return checkout > checkin;
+  };
+
   return (
     <AuthenticatedLayout
       header={<h2 className="text-xl font-semibold leading-tight text-gray-800">Residents</h2>}
@@ -325,11 +343,39 @@ export default function Residents() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-sm font-medium">Check-in Date</label>
-                    <input type="date" className="mt-1 block w-full shadow border-violet-200 transition-shadow hover:ring-2 hover:ring-violet-300 focus:border-violet-500 focus:ring-violet-500 px-2 py-2 rounded" value={assignForm.data.check_in_date} onChange={(e) => assignForm.setData('check_in_date', e.target.value)} />
+                    <input
+                      type="date"
+                      className="mt-1 block w-full shadow border-violet-200 transition-shadow hover:ring-2 hover:ring-violet-300 focus:border-violet-500 focus:ring-violet-500 px-2 py-2 rounded"
+                      value={assignForm.data.check_in_date}
+                      max={assignForm.data.check_out_date ? addDays(assignForm.data.check_out_date, -1) : undefined}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        assignForm.setData('check_in_date', v);
+                        // if existing checkout is not strictly after new checkin, clear it
+                        if (assignForm.data.check_out_date && !isCheckoutValidForCheckin(assignForm.data.check_out_date, v)) {
+                          assignForm.setData('check_out_date', '');
+                        }
+                      }}
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium">Check-out Date</label>
-                    <input type="date" className="mt-1 block w-full shadow border-violet-200 transition-shadow hover:ring-2 hover:ring-violet-300 focus:border-violet-500 focus:ring-violet-500 px-2 py-2 rounded" value={assignForm.data.check_out_date} onChange={(e) => assignForm.setData('check_out_date', e.target.value)} />
+                    <input
+                      type="date"
+                      className="mt-1 block w-full shadow border-violet-200 transition-shadow hover:ring-2 hover:ring-violet-300 focus:border-violet-500 focus:ring-violet-500 px-2 py-2 rounded"
+                      value={assignForm.data.check_out_date}
+                      min={assignForm.data.check_in_date ? addDays(assignForm.data.check_in_date, 1) : undefined}
+                      onChange={(e) => {
+                        const v = e.target.value;
+                        // prevent selecting invalid checkout; if invalid, ignore selection
+                        if (assignForm.data.check_in_date && !isCheckoutValidForCheckin(v, assignForm.data.check_in_date)) {
+                          // clear or keep previous valid value; here we ignore the invalid pick
+                          assignForm.setData('check_out_date', '');
+                        } else {
+                          assignForm.setData('check_out_date', v);
+                        }
+                      }}
+                    />
                   </div>
                 </div>
                 <div className="flex items-center justify-end gap-4">
@@ -534,14 +580,39 @@ export default function Residents() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-sm font-medium">Check-in Date</label>
-                      <input type="date" className="mt-1 block w-full shadow border-violet-200 transition-shadow hover:ring-2 hover:ring-violet-300 focus:border-violet-500 focus:ring-violet-500 px-2 py-2 rounded" value={bulkForm.data.check_in_date} onChange={(e) => bulkForm.setData('check_in_date', e.target.value)} />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium">Check-out Date</label>
-                      <input type="date" className="mt-1 block w-full shadow border-violet-200 transition-shadow hover:ring-2 hover:ring-violet-300 focus:border-violet-500 focus:ring-violet-500 px-2 py-2 rounded" value={bulkForm.data.check_out_date} onChange={(e) => bulkForm.setData('check_out_date', e.target.value)} />
-                    </div>
+                      <div>
+                        <label className="block text-sm font-medium">Check-in Date</label>
+                        <input
+                          type="date"
+                          className="mt-1 block w-full shadow border-violet-200 transition-shadow hover:ring-2 hover:ring-violet-300 focus:border-violet-500 focus:ring-violet-500 px-2 py-2 rounded"
+                          value={bulkForm.data.check_in_date}
+                          max={bulkForm.data.check_out_date ? addDays(bulkForm.data.check_out_date, -1) : undefined}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            bulkForm.setData('check_in_date', v);
+                            if (bulkForm.data.check_out_date && !isCheckoutValidForCheckin(bulkForm.data.check_out_date, v)) {
+                              bulkForm.setData('check_out_date', '');
+                            }
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium">Check-out Date</label>
+                        <input
+                          type="date"
+                          className="mt-1 block w-full shadow border-violet-200 transition-shadow hover:ring-2 hover:ring-violet-300 focus:border-violet-500 focus:ring-violet-500 px-2 py-2 rounded"
+                          value={bulkForm.data.check_out_date}
+                          min={bulkForm.data.check_in_date ? addDays(bulkForm.data.check_in_date, 1) : undefined}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            if (bulkForm.data.check_in_date && !isCheckoutValidForCheckin(v, bulkForm.data.check_in_date)) {
+                              bulkForm.setData('check_out_date', '');
+                            } else {
+                              bulkForm.setData('check_out_date', v);
+                            }
+                          }}
+                        />
+                      </div>
                   </div>
                   <div className="flex items-center justify-end gap-4">
                     <button type="submit" disabled={bulkForm.processing || bulkForm.data.student_ids.length === 0} className="px-4 py-2 text-white rounded bg-violet-600 hover:bg-violet-700 focus:bg-violet-700 focus:ring-violet-400">Assign Selected</button>
